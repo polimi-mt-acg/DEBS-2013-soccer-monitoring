@@ -41,9 +41,9 @@
 # Project datasets
 datasets/original/full-game
 
-datasets/preprocessed
-!datasets/original/*.py
-!datasets/original/*.md
+datasets/preprocessed/*
+!datasets/preprocessed/*.py
+!datasets/preprocessed/*.md
 
 
 ### Python ###

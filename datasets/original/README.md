@@ -1,12 +1,11 @@
-# Original datasets
+# Original files
 
-This folder should contains the original, just downloaded, datasets for the
-project.
+This folder should contains the original, just downloaded, files for the project.
 
 The main `full-game` file is not included in this repository because of its size.
 
 
-### Files download links
+### Files' download links
 
 - full-game.zip (1.7GB) <https://aerofs.neslab.it/l/0b15ed33250349c199c37c85a7408dc9>
 - RedFIR_2012_1.mov (1.7 GB) [optional] <https://aerofs.neslab.it/l/a47fd7abc87b4b73b2c409d8fa18d5ad>
