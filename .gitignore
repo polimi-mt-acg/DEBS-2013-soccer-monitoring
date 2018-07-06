@@ -40,3 +40,12 @@
 
 # Project datasets
 datasets/original/full-game
+
+datasets/preprocessed
+!datasets/original/*.py
+!datasets/original/*.md
+
+
+### Python ###
+__pycache__/
+*.py[cod]
