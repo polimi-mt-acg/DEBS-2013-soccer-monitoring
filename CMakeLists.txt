@@ -12,9 +12,11 @@ enable_testing()
 #                       DEBS 2013 - Soccer Monitoring
 # ==-----------------------------------------------------------------------== #
 set(SOCCER_MONITORING_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp)
 
-add_executable(soccer-monitoring ${SOCCER_MONITORING_SRC})
+add_executable(soccer-monitoring
+    ${SOCCER_MONITORING_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
 target_include_directories(soccer-monitoring
     PUBLIC
@@ -37,8 +39,9 @@ add_library(Catch INTERFACE)
 target_include_directories(Catch INTERFACE ${CATCH_INCLUDE_DIR})
 
 set(TEST_SOURCES
+        ${SOCCER_MONITORING_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/hello.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/metadata_test.cpp)
 
 add_executable(tests ${TEST_SOURCES})
 
