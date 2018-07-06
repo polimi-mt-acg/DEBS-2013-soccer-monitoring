@@ -37,3 +37,6 @@
 # Visual Studio Code
 **/.vscode
 *.code-workspace
+
+# Project datasets
+datasets/original/full-game
