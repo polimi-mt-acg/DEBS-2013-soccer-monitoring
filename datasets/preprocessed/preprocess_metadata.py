@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-import re, os, csv
+import re
+import os
+import csv
 import fileinput
 from pprint import pprint
 
@@ -11,16 +13,18 @@ class _RegExLib:
     _reg_section_team_A = re.compile(r'.*Team A.*')
     _reg_section_team_B = re.compile(r'.*Team B.*')
 
-
     _reg_balls_1st_half = re.compile(r'- 1st Half: ([0-9,\s]+).*')
     _reg_balls_2nd_half = re.compile(r'- 2nd Half: ([0-9,\s]+).*')
     # _reg_grade = re.compile(r'Grade = (.*)\n')
     # _reg_name_score = re.compile(r'(Name|Score)')
 
-    _reg_player = re.compile(r'^(.*)\s\(Left Leg: ([0-9]+), Right Leg: ([0-9]+)\).*')
-    _reg_goalkeeper = re.compile(r'^(.*)\s\(Left Leg: ([0-9]+), Right Leg: ([0-9]+), Left Arm: ([0-9]+), Right Arm: ([0-9]+)\).*')
+    _reg_player = re.compile(
+        r'^(.*)\s\(Left Leg: ([0-9]+), Right Leg: ([0-9]+)\).*')
+    _reg_goalkeeper = re.compile(
+        r'^(.*)\s\(Left Leg: ([0-9]+), Right Leg: ([0-9]+), Left Arm: ([0-9]+), Right Arm: ([0-9]+)\).*')
 
-    _reg_referee = re.compile(r'Referee \(Left Leg: ([0-9]+), Right Leg: ([0-9]+).*')
+    _reg_referee = re.compile(
+        r'Referee \(Left Leg: ([0-9]+), Right Leg: ([0-9]+).*')
 
     __slots__ = [
         'section_balls',
@@ -122,14 +126,15 @@ def load_matedata_content(filepath):
                     id2 = reg_match.goalkeeper.group(3).strip()
                     id3 = reg_match.goalkeeper.group(4).strip()
                     id4 = reg_match.goalkeeper.group(5).strip()
-                    c = 'PLAYER,{},{},{},{},{},{}'.format(team, name, id1, id2, id3, id4)
+                    c = 'PLAYER,{},{},{},{},{},{}'.format(
+                        team, name, id1, id2, id3, id4)
                     print('PARSED', c)
                     contents.append(c)
 
     return contents
 
 
-def process_full_game(source_filepath='', target_filepath='metadata'):
+def process_metadata(source_filepath='', target_filepath='metadata'):
     '''
     Perform preprocessing of metadata file
     '''
@@ -150,6 +155,10 @@ def process_full_game(source_filepath='', target_filepath='metadata'):
     with open(target_filepath, 'w') as out:
         out.writelines(lines)
 
-    print(f'\n{source_filepath} file preprocessing finished.\n\n')
+    print('\n================================================================')
+    print(f'  {source_filepath} FILE PROCESSING COMPLETED')
+    print('================================================================\n\n')
 
-process_full_game(source_filepath='./../original/metadata.txt')
+
+if __name__ == '__main__':
+    process_metadata(source_filepath='./../original/metadata.txt')

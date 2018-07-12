@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-import os, csv
+import os
+import csv
 import fileinput
 from pprint import pprint
 
@@ -24,6 +25,7 @@ game_timestamps = {
         'end': 14879639146403495,
     }
 }
+
 
 def load_half_game_interrupts(filename='1st Half.csv', valid_ids=['2011', '2010'], half_index='half_1'):
     '''
@@ -52,16 +54,17 @@ def load_half_game_interrupts(filename='1st Half.csv', valid_ids=['2011', '2010'
                 delta_timestamp += ss * int(1e7)
                 delta_timestamp += ms * int(1e4)
 
-                timestamp = game_timestamps[half_index]['start'] + delta_timestamp
+                timestamp = game_timestamps[half_index]['start'] + \
+                    delta_timestamp
 
                 game_interrupts.append([
-                    'GI', # game interrupt event type
-                    line[0], # event_id;
-                    line[1], # event_name;
-                    line[2], # event_time_real;
-                    str(timestamp), # event timestamp;
-                    line[3], # event_counter;
-                    line[4], # comment
+                    'GI',  # game interrupt event type
+                    line[0],  # event_id;
+                    line[1],  # event_name;
+                    line[2],  # event_time_real;
+                    str(timestamp),  # event timestamp;
+                    line[3],  # event_counter;
+                    line[4],  # comment
                 ])
 
     return game_interrupts
@@ -94,17 +97,18 @@ def load_game_interrupts():
     # pprint(game_interrupts)
     return game_interrupts
 
-def process_full_game(source_filename='', target_filename='full-game'):
+
+def process_full_game(source_filepath='', target_filename='full-game'):
     '''
     Perform preprocessing on the full-game file
     '''
 
     print('=============================================')
-    print(f'  {source_filename} FILE PROCESSING')
+    print(f'  {source_filepath} FILE PROCESSING')
     print('=============================================')
     print('Starting preprocessing...')
     print('#lines\tFile')
-    os.system(f'wc -l {source_filename}')
+    os.system(f'wc -l {source_filepath}')
 
     gi = load_game_interrupts()
     # [
@@ -138,7 +142,7 @@ def process_full_game(source_filename='', target_filename='full-game'):
     # open target file
     with open(target_filename, 'w') as out:
         # open input file
-        with fileinput.input(files=(source_filename)) as csv_file:
+        with fileinput.input(files=(source_filepath)) as csv_file:
             lines = csv.reader(csv_file)
             for line in lines:
                 line_no = fileinput.lineno()
@@ -154,7 +158,8 @@ def process_full_game(source_filename='', target_filename='full-game'):
 
                 # if
                 if gi_to_insert and int(line[1]) >= int(gi_to_insert[4]):
-                    print(f'line {line_no}: Inserted Game Interruption event: {gi_to_insert}', flush=True)
+                    print(
+                        f'line {line_no}: Inserted Game Interruption event: {gi_to_insert}', flush=True)
 
                     gi_line = ','.join(gi_to_insert)
                     n_line = gi_line + '\n' + n_line
@@ -166,11 +171,16 @@ def process_full_game(source_filename='', target_filename='full-game'):
 
                 out.write(n_line + '\n')
 
-    print(f'\n{source_filename} file preprocessing finished.\n\n')
+    print('\n================================================================')
+    print(f'  {source_filepath} FILE PROCESSING COMPLETED')
+    print('================================================================\n\n')
+
     if len(gi):
         print('Not all the Game Interrupt events have been inserted.\n\nNot inserted are:')
         pprint(gi)
     else:
         print('All the Game Interrupt events have been inserted.')
 
-process_full_game(source_filename='./../original/full-game')
+
+if __name__ == '__main__':
+    process_full_game(source_filepath='./../original/full-game')
