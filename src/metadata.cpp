@@ -47,7 +47,7 @@ bool BallMap::is_ball(int sensor_id) const {
   return search != balls.cend();
 }
 
-<<<<<<< HEAD
+
 const std::regex Metadata::ball_re = std::regex{"BALL,(\\d+),(\\d+)"};
 const std::regex Metadata::player_re =
     std::regex{"PLAYER,([AB]),([ \\w]+),(\\d+),(\\d+),(\\d+),(\\d+)"};
@@ -111,5 +111,4 @@ parse_metadata_string(std::string const &metadata) {
 
   return {players, teams, balls};
 }
-
 } // namespace game

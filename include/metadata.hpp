@@ -85,7 +85,6 @@ public:
 private:
   std::vector<int> balls = {};
 };
-<<<<<<< HEAD
 
 struct Metadata {
   static const std::regex ball_re;
