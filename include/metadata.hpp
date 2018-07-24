@@ -10,7 +10,6 @@
 #include "fmt/format.h"
 
 #include "stream_types.hpp"
-
 namespace game {
 
 /**
@@ -86,6 +85,7 @@ public:
 private:
   std::vector<int> balls = {};
 };
+<<<<<<< HEAD
 
 struct Metadata {
   static const std::regex ball_re;
@@ -116,7 +116,6 @@ parse_metadata_file(std::string const &path);
 
 std::tuple<PlayerMap, TeamMap, BallMap>
 parse_metadata_string(std::string const &metadata);
-
 } // namespace game
 
 #endif
