@@ -32,11 +32,14 @@
 *.app
 
 # CMake build folders
-**/build*/
+**/*build*/
 
 # Visual Studio Code
 **/.vscode
 *.code-workspace
+
+# Jetbrains
+**/.idea/
 
 # Project datasets
 datasets/original/full-game
