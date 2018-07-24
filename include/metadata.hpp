@@ -1,9 +1,15 @@
 #ifndef GAME_MAPS_H
 #define GAME_MAPS_H
 
+#include <regex>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
+
+#include "fmt/format.h"
+
+#include "stream_types.hpp"
 
 namespace game {
 
@@ -44,6 +50,18 @@ private:
   std::unordered_map<int, std::string> player = {};
 };
 
+enum class Team { A = 1, B };
+
+class TeamMap {
+public:
+  void add_player(std::string const &player, Team team);
+  Team operator[](std::string const &player) const;
+
+private:
+  std::vector<std::string> team_A = {};
+  std::vector<std::string> team_B = {};
+};
+
 /**
  * @brief A mapping between sensor-ids and balls wrapping those sensors.
  */
@@ -68,6 +86,37 @@ public:
 private:
   std::vector<int> balls = {};
 };
+
+struct Metadata {
+  static const std::regex ball_re;
+  static constexpr auto ball_re_sid_idx = 2;
+
+  static const std::regex player_re;
+  static constexpr auto player_re_team_idx = 1;
+  static constexpr auto player_re_name_idx = 2;
+  static constexpr auto player_re_sid_start_idx = 3;
+  static constexpr auto player_re_sid_end_idx = 6;
+};
+
+struct file_not_found_error : public std::runtime_error {
+  explicit file_not_found_error(std::string const &path)
+      : runtime_error(""), path{path} {}
+
+  const char *what() const throw() {
+    auto str = fmt::format("File {} not found.", path);
+    return strdup(str.c_str());
+  }
+
+private:
+  std::string path;
+};
+
+std::tuple<PlayerMap, TeamMap, BallMap>
+parse_metadata_file(std::string const &path);
+
+std::tuple<PlayerMap, TeamMap, BallMap>
+parse_metadata_string(std::string const &metadata);
+
 } // namespace game
 
 #endif
