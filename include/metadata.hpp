@@ -9,7 +9,9 @@
 
 #include "fmt/format.h"
 
+#include "position.hpp"
 #include "stream_types.hpp"
+
 namespace game {
 
 /**
@@ -87,6 +89,14 @@ private:
 };
 
 struct Metadata {
+  PlayerMap players;
+  TeamMap teams;
+  BallMap balls;
+
+  std::vector<Positions> positions;
+};
+
+struct ParseMetadata {
   static const std::regex ball_re;
   static constexpr auto ball_re_sid_idx = 2;
 
@@ -110,11 +120,9 @@ private:
   std::string path;
 };
 
-std::tuple<PlayerMap, TeamMap, BallMap>
-parse_metadata_file(std::string const &path);
+Metadata parse_metadata_file(std::string const &path);
 
-std::tuple<PlayerMap, TeamMap, BallMap>
-parse_metadata_string(std::string const &metadata);
+Metadata parse_metadata_string(std::string const &metadata);
 } // namespace game
 
 #endif

@@ -57,7 +57,10 @@ TEST_CASE("BallMap correctly stores metadata", "[metadata]") {
 }
 
 TEST_CASE("Parse metadata") {
-  auto [players, teams, balls] = game::parse_metadata_string(metadata);
+  auto meta = game::parse_metadata_string(metadata);
+  auto &players = meta.players;
+  auto &teams = meta.teams;
+  auto &balls = meta.balls;
 
   // Check balls metadata
   REQUIRE(balls.is_ball(4));

@@ -25,7 +25,8 @@ add_subdirectory(external/fmt EXCLUDE_FROM_ALL)
 set(SOCCER_MONITORING_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event_fetcher.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp)
 
 add_executable(soccer-monitoring
         ${SOCCER_MONITORING_SRC}
