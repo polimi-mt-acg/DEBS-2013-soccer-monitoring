@@ -1,4 +1,5 @@
 #include "metadata.hpp"
+#include "position.hpp"
 
 #include <algorithm>
 #include <array>
@@ -8,6 +9,11 @@
 #include <sstream>
 
 namespace game {
+
+// ==-----------------------------------------------------------------------==
+//                        PlayerMap implementation
+// ==-----------------------------------------------------------------------==
+
 void PlayerMap::add_sensor(int sensor_id, std::string const &player) {
   this->player.insert({sensor_id, player});
 }
@@ -20,6 +26,10 @@ bool PlayerMap::is_player(int sensor_id) const {
 std::string const &PlayerMap::operator[](int const &sensor_id) const {
   return player.at(sensor_id);
 }
+
+// ==-----------------------------------------------------------------------==
+//                        TeamMap implementation
+// ==-----------------------------------------------------------------------==
 
 void TeamMap::add_player(std::string const &player, Team team) {
   if (team == Team::A) {
@@ -40,6 +50,10 @@ Team TeamMap::operator[](std::string const &player) const {
   }
 }
 
+// ==-----------------------------------------------------------------------==
+//                        BallMap implementation
+// ==-----------------------------------------------------------------------==
+
 void BallMap::add_ball(int sensor_id) { balls.push_back(sensor_id); }
 
 bool BallMap::is_ball(int sensor_id) const {
@@ -47,13 +61,21 @@ bool BallMap::is_ball(int sensor_id) const {
   return search != balls.cend();
 }
 
+// ==-----------------------------------------------------------------------==
+//                    Static variables definition
+// ==-----------------------------------------------------------------------==
 
-const std::regex Metadata::ball_re = std::regex{"BALL,(\\d+),(\\d+)"};
-const std::regex Metadata::player_re =
+const std::regex ParseMetadata::ball_re = std::regex{"BALL,(\\d+),(\\d+)"};
+const std::regex ParseMetadata::player_re =
     std::regex{"PLAYER,([AB]),([ \\w]+),(\\d+),(\\d+),(\\d+),(\\d+)"};
 
-std::tuple<PlayerMap, TeamMap, BallMap>
-parse_metadata_file(std::string const &path) {
+
+// ==-----------------------------------------------------------------------==
+//                        Functions definition
+// ==-----------------------------------------------------------------------==
+
+
+Metadata parse_metadata_file(std::string const &path) {
   namespace fs = std::filesystem;
 
   auto p = fs::path{path};
@@ -68,31 +90,36 @@ parse_metadata_file(std::string const &path) {
   return parse_metadata_string(buffer.str());
 }
 
-std::tuple<PlayerMap, TeamMap, BallMap>
-parse_metadata_string(std::string const &metadata) {
+Metadata parse_metadata_string(std::string const &metadata) {
   auto ss = std::stringstream{metadata};
   auto match = std::smatch{};
 
   auto players = PlayerMap{};
   auto teams = TeamMap{};
   auto balls = BallMap{};
+  auto positions = std::vector<Positions>();
+  positions.emplace_back(BallPosition{});
+  auto &ball_position = positions.back();
 
   for (auto line = std::string{}; std::getline(ss, line);) {
-    if (std::regex_match(line, match, Metadata::ball_re)) {
+    if (std::regex_match(line, match, ParseMetadata::ball_re)) {
       // Get sensor id for the ball and it to ball map if not already present
-      auto ball_sid = std::stoi(match[Metadata::ball_re_sid_idx].str());
+      auto ball_sid = std::stoi(match[ParseMetadata::ball_re_sid_idx].str());
       if (!balls.is_ball(ball_sid)) {
         balls.add_ball(ball_sid);
+        std::visit([ball_sid](auto &&pos) { pos.add_sensor(ball_sid); },
+                   ball_position);
       }
-    } else if (std::regex_match(line, match, Metadata::player_re)) {
-      auto team = (match[Metadata::player_re_team_idx].str() == "A" ? Team::A
-                                                                    : Team::B);
-      auto name = match[Metadata::player_re_name_idx].str();
+    } else if (std::regex_match(line, match, ParseMetadata::player_re)) {
+      auto team =
+          (match[ParseMetadata::player_re_team_idx].str() == "A" ? Team::A
+                                                                 : Team::B);
+      auto name = match[ParseMetadata::player_re_name_idx].str();
 
       // Parse sensor ids for player
       auto sids = std::vector<int>{};
-      for (std::size_t i = Metadata::player_re_sid_start_idx;
-           i <= Metadata::player_re_sid_end_idx; ++i) {
+      for (std::size_t i = ParseMetadata::player_re_sid_start_idx;
+           i <= ParseMetadata::player_re_sid_end_idx; ++i) {
         auto sid = std::stoi(match[i].str());
         if (sid != 0) {
           sids.push_back(sid);
@@ -101,14 +128,17 @@ parse_metadata_string(std::string const &metadata) {
 
       // Fill maps
       teams.add_player(name, team);
+      auto position = PlayerPosition{};
       for (auto sid : sids) {
         players.add_sensor(sid, name);
+        position.add_sensor(sid);
       }
+      positions.emplace_back(std::move(position));
     } else {
       fmt::print(stderr, "Unable to parse line:\n  {}\n  Skipping...\n", line);
     }
   }
 
-  return {players, teams, balls};
+  return {players, teams, balls, positions};
 }
 } // namespace game
