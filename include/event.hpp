@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 #include <ratio>
+#include <tuple>
 
 namespace std {
 namespace chrono {
@@ -21,6 +22,11 @@ constexpr auto game_start = std::chrono::picoseconds{10753295594424116};
  * @brief The instant of game end (in picoseconds).
  */
 constexpr auto game_end = std::chrono::picoseconds{14879639146403495};
+
+constexpr auto field_lower_x = 0;
+constexpr auto field_upper_x = 52483;
+constexpr auto field_lower_y = -33960;
+constexpr auto field_upper_y = 33965;
 
 /**
  * @brief A game interruption event.
@@ -60,6 +66,7 @@ public:
   int get_x() const { return x; }
   int get_y() const { return y; }
   int get_z() const { return z; }
+  std::tuple<int, int, int> get_vector() const { return {x, y, z}; }
 
   friend std::ostream &operator<<(std::ostream &, PositionEvent const &);
 
