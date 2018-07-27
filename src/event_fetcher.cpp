@@ -6,10 +6,15 @@
 #include "event.hpp"
 
 namespace game {
+
+// ==-----------------------------------------------------------------------==
+//                     EventFetcher implementation
+// ==-----------------------------------------------------------------------==
+
 template <>
 EventFetcher::EventFetcher(std::string const &path, game::file_stream,
-                           std::size_t batch_size)
-    : batch_size{batch_size} {
+                           std::size_t batch_size, Context &context)
+    : batch_size{batch_size}, context{context} {
   // Open a file stream
   is = std::make_unique<std::ifstream>(path, std::ios_base::in);
 
@@ -19,8 +24,8 @@ EventFetcher::EventFetcher(std::string const &path, game::file_stream,
 
 template <>
 EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
-                           std::size_t batch_size)
-    : batch_size{batch_size} {
+                           std::size_t batch_size, Context &context)
+    : batch_size{batch_size}, context{context} {
   // Open a string stream
   is = std::make_unique<std::istringstream>(dataset);
 
@@ -55,6 +60,19 @@ PositionEvent EventFetcher::parse_next_event() {
           // Return PositionEvent
           if (!game_paused) {
             got_position_event = true;
+          } else {
+            // If the game is paused, we do not return the parsed event. Still,
+            // we need to update its sensor position, otherwise when the game
+            // resumes, the sensors would still be found at the very old
+            // position (which would be wrong)
+            auto pos_event = std::get<PositionEvent>(event);
+            auto &position = context.get_position(pos_event.get_sid());
+            std::visit(
+                [&pos_event](auto &&pos) {
+                  pos.update_sensor(pos_event.get_sid(),
+                                    pos_event.get_vector());
+                },
+                position);
           }
         } else {
           throw unexpected_event_error{};
@@ -79,11 +97,12 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
       // If an in-game position event
       if (position_event.get_timestamp() >= game::game_start &&
           position_event.get_timestamp() < game_end) {
-        batch.push_back(std::move(position_event));
+        batch.push_back(position_event);
         if (batch.size() == batch_size) {
           is_batch_full = true;
         }
       }
+      // Otherwise, update positions to have them updated before game start
     } catch (std::ios_base::failure &ex) {
       std::cout << ex.what() << "\n";
       return batch;
@@ -93,7 +112,7 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
 }
 
 // ==-----------------------------------------------------------------------==
-//                              Dataset parsing
+//                     Static variables initialization
 // ==-----------------------------------------------------------------------==
 
 const std::regex Dataset::se_re =
@@ -102,10 +121,12 @@ const std::regex Dataset::gi_re = std::regex{
     "GI,(\\d+),([ "
     "\\w]+),(0|\\d{2}:\\d{2}:\\d{2}\\.\\d{3}),(\\d+),(\\d+),([ \\w]+)"};
 
+// ==-----------------------------------------------------------------------==
+//                      Functions definition
+// ==-----------------------------------------------------------------------==
+
 std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
 parse_event_line(std::string const &line) {
-  using Result = std::variant<std::monostate, PositionEvent, InterruptionEvent,
-                              ResumeEvent>;
   auto match = std::smatch{};
 
   if (std::regex_match(line, match, Dataset::gi_re)) {
@@ -114,9 +135,9 @@ parse_event_line(std::string const &line) {
     auto ts = std::stoll(match[Dataset::gi_re_timestamp_idx].str());
 
     if (event_id == Dataset::game_interruption_id) {
-      return Result{InterruptionEvent{std::chrono::picoseconds{ts}}};
+      return InterruptionEvent{std::chrono::picoseconds{ts}};
     } else if (event_id == Dataset::game_resume_id) {
-      return Result{ResumeEvent{std::chrono::picoseconds{ts}}};
+      return ResumeEvent{std::chrono::picoseconds{ts}};
     } else {
       throw unknown_game_interruption_event_error{event_id};
     }
@@ -128,10 +149,9 @@ parse_event_line(std::string const &line) {
     auto y = std::stoi(match[Dataset::se_re_y_idx].str());
     auto z = std::stoi(match[Dataset::se_re_z_idx].str());
 
-    return Result{PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z}};
+    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
   } else {
     throw unknown_event_error{line};
   }
-  return Result();
 }
 } // namespace game

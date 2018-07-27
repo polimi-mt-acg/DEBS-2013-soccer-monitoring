@@ -1,4 +1,5 @@
 #include "catch.hpp"
+#include "context.hpp"
 #include "event.hpp"
 #include "event_fetcher.hpp"
 #include "metadata.hpp"
@@ -48,8 +49,24 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
         "7855,-3696,4961\n"
         "SE,65,10634738740592737,28258,-893,439,53656,885053,5930,450,8038,8042,5909,-626\n"s;
 
+    auto meta = game::parse_metadata_string(metadata);
+    auto &players = meta.players;
+    auto &teams = meta.teams;
+    auto &balls = meta.balls;
+
+    auto context = game::Context{};
+    context.set_player_map(players);
+    context.set_team_map(teams);
+    context.set_ball_map(balls);
+
+    for (auto &position : meta.positions) {
+      auto sids =
+          std::visit([](auto &&pos) { return pos.get_sids(); }, position);
+      context.add_position(std::move(position), sids);
+    }
+
     auto fetcher =
-        game::EventFetcher(position_events, game::string_stream{}, 10);
+        game::EventFetcher(position_events, game::string_stream{}, 10, context);
 
     // Read all the position events and print them
     for (int i = 0; i < 9; ++i) {
@@ -63,8 +80,24 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
 
   SECTION("Test batch parsing") {
     std::size_t batch_size = 10;
-    auto fetcher = game::EventFetcher{game_data_start_10_50,
-                                      game::string_stream{}, batch_size};
+    auto meta = game::parse_metadata_string(metadata);
+    auto &players = meta.players;
+    auto &teams = meta.teams;
+    auto &balls = meta.balls;
+
+    auto context = game::Context{};
+    context.set_player_map(players);
+    context.set_team_map(teams);
+    context.set_ball_map(balls);
+
+    for (auto &position : meta.positions) {
+      auto sids =
+          std::visit([](auto &&pos) { return pos.get_sids(); }, position);
+      context.add_position(std::move(position), sids);
+    }
+
+    auto fetcher = game::EventFetcher{
+        game_data_start_10_50, game::string_stream{}, batch_size, context};
 
     const auto &first_batch = fetcher.parse_batch();
 
@@ -74,7 +107,6 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
     // Game events before game start are dropped
     REQUIRE(first_batch[0].get_timestamp() >= game::game_start);
 
-    auto [players, teams, balls] = game::parse_metadata_string(metadata);
     for (auto &event : first_batch) {
       if (balls.is_ball(event.get_sid())) {
         fmt::print("Ball [{}] moved to position ({}, {}, {}) at {}\n",
