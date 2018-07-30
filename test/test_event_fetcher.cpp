@@ -62,7 +62,7 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
     for (auto &position : meta.positions) {
       auto sids =
           std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-      context.add_position(std::move(position), sids);
+      context.add_position(position, sids);
     }
 
     auto fetcher =
@@ -93,7 +93,7 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
     for (auto &position : meta.positions) {
       auto sids =
           std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-      context.add_position(std::move(position), sids);
+      context.add_position(position, sids);
     }
 
     auto fetcher = game::EventFetcher{

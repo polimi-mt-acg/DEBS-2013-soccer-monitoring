@@ -1,5 +1,5 @@
 import sys
-from path import Path
+from pathlib import Path
 
 game_ts = {
     'half_1': {
@@ -17,7 +17,7 @@ def generate_test_dataset_top(path_str, out_str, before_start=10, game_rows=50):
     path = Path(path_str)
 
     # Check file existance
-    if not path.isfile():
+    if not path.is_file():
         raise FileNotFoundError()
 
     read_lines = []
@@ -33,8 +33,13 @@ def generate_test_dataset_top(path_str, out_str, before_start=10, game_rows=50):
                 read_lines.append(line)
                 tokens = line.split(',')
                 event_t = tokens[0]
-                # Upon game start, append to output lines the last BEFORE_START read lines
-                if event_t == 'SE' and int(tokens[2]) >= game_ts['half_1']['start']:
+                # Upon game start, append to output lines the last
+                # BEFORE_START read lines
+                if event_t == 'SE':
+                    is_in_game = int(tokens[2]) >= game_ts['half_1']['start']
+                else:
+                    is_in_game = int(tokens[4]) >= game_ts['half_1']['start']
+                if event_t == 'SE' and is_in_game:
                     print('Found starting game line...')
                     print(line)
                     out_lines += read_lines[-before_start:]
@@ -53,15 +58,17 @@ def generate_test_dataset_top(path_str, out_str, before_start=10, game_rows=50):
     with out_path.open(mode='w') as out:
         print('\nWriting test dataset...')
         for line in out_lines:
-            print(line)
+            # print(line)
             out.write(line + '\n')
 
 
 if __name__ == '__main__':
     args = sys.argv
-    usage = 'Usage: {} preprocessed_game_file output_file'.format(args[0])
+    usage = ('Usage: {} preprocessed_game_file output_file N_BEFORE N_INGAME\n'
+             '\tN_BEFORE\t\tNumber of rows before game start\n'
+             '\tN_INGAME\t\tNumber of rows in game.').format(args[0])
     try:
-        generate_test_dataset_top(args[1], args[2])
+        generate_test_dataset_top(args[1], args[2], int(args[3]), int(args[4]))
     except FileNotFoundError:
         print('Unable to find file {}'.format(args[1]))
         print(usage)

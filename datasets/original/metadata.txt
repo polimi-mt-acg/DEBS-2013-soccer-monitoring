@@ -7,7 +7,7 @@ Team A:
 
 
 Nick Gertje (Left Leg: 13, Right Leg: 14, Left Arm: 97, Right Arm: 98)
-Dennis Dotterweich (Left Leg: 47, Right Leg:16)
+Dennis Dotterweich (Left Leg: 47, Right Leg: 16)
 Niklas Waelzlein (Left Leg: 49, Right Leg: 88)
 Wili Sommer (Left Leg: 19, Right Leg: 52)
 Philipp Harlass (Left Leg: 53, Right Leg: 54)

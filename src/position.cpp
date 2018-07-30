@@ -29,7 +29,7 @@ std::size_t PlayerPosition::sid_index(int sid) const {
   }
 }
 
-std::tuple<float, float, float> PlayerPosition::vector() const {
+std::tuple<double, double, double> PlayerPosition::vector() const {
   auto x_bar = mean(xs.cbegin(), xs.cend());
   auto y_bar = mean(ys.cbegin(), ys.cend());
   auto z_bar = mean(zs.cbegin(), zs.cend());

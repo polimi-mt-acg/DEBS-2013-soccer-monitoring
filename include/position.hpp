@@ -10,7 +10,7 @@
 namespace game {
 template <typename Derived> class Position {
 public:
-  std::tuple<float, float, float> vector() const {
+  std::tuple<double, double, double> vector() const {
     return static_cast<Derived &>(*this).vector();
   }
 
@@ -20,14 +20,14 @@ public:
     static_cast<Derived &>(*this).update_sensor(sid, vector);
   }
 
-  std::vector<int> get_sids() const {
+  std::vector<int> const&get_sids() const {
     return static_cast<Derived &>(*this).get_sids();
   }
 };
 
 class BallPosition : public Position<BallPosition> {
 public:
-  std::tuple<float, float, float> vector() const {
+  std::tuple<double, double, double> vector() const {
     return {xs[game_ball], ys[game_ball], zs[game_ball]};
   }
 
@@ -42,7 +42,7 @@ public:
     game_ball = sids.size() - 1; // Set last add ball as the game one
   }
 
-  std::vector<int> get_sids() const { return sids; }
+  std::vector<int> const &get_sids() const { return sids; }
 
 private:
   std::size_t game_ball = -1;
@@ -56,7 +56,7 @@ private:
 
 class PlayerPosition : public Position<PlayerPosition> {
 public:
-  std::tuple<float, float, float> vector() const;
+  std::tuple<double, double, double> vector() const;
   void update_sensor(int sid, std::tuple<int, int, int> vector);
   void add_sensor(int sid) {
     sids.push_back(sid);
@@ -64,7 +64,7 @@ public:
     ys.push_back(0);
     zs.push_back(0);
   }
-  std::vector<int> get_sids() const { return sids; };
+  std::vector<int> const &get_sids() const { return sids; };
 
 private:
   std::vector<int> sids = {};
@@ -77,10 +77,10 @@ private:
 
 using Positions = std::variant<BallPosition, PlayerPosition>;
 
-template <typename Iter> float mean(Iter first, Iter end) {
+template <typename Iter> double mean(Iter first, Iter end) {
   auto sum = std::accumulate(first, end, 0.0f);
   auto n = std::distance(first, end);
-  return static_cast<float>(sum) / n;
+  return static_cast<double>(sum) / n;
 }
 
 } // namespace game

@@ -6,7 +6,9 @@
 #include <exception>
 #include <filesystem>
 #include <fstream>
+#include <metadata.hpp>
 #include <sstream>
+#include <unordered_set>
 
 namespace game {
 
@@ -16,6 +18,14 @@ namespace game {
 
 void PlayerMap::add_sensor(int sensor_id, std::string const &player) {
   this->player.insert({sensor_id, player});
+
+  auto &ss = sids[player];
+
+  // If not already registered, add sensor_id to sensor ids for player
+  if (auto find = std::find(ss.cbegin(), ss.cend(), sensor_id);
+      find == ss.cend()) {
+    ss.push_back(sensor_id);
+  }
 }
 
 bool PlayerMap::is_player(int sensor_id) const {
@@ -25,6 +35,25 @@ bool PlayerMap::is_player(int sensor_id) const {
 
 std::string const &PlayerMap::operator[](int const &sensor_id) const {
   return player.at(sensor_id);
+}
+
+std::vector<std::string> PlayerMap::get_player_names() const {
+  auto names = std::vector<std::string>();
+
+  for (auto const &[name, sids_v] : sids) {
+    names.push_back(name);
+  }
+
+  return names;
+}
+
+std::vector<int> PlayerMap::get_player_sids(std::string const &name) const {
+  if (const auto find = sids.find(name); find != sids.cend()) {
+    return find->second;
+  } else {
+    throw std::out_of_range{fmt::format(
+        "[PlayerMap::get_player_sids] Unknown player name: {}", name)};
+  }
 }
 
 // ==-----------------------------------------------------------------------==
@@ -67,13 +96,11 @@ bool BallMap::is_ball(int sensor_id) const {
 
 const std::regex ParseMetadata::ball_re = std::regex{"BALL,(\\d+),(\\d+)"};
 const std::regex ParseMetadata::player_re =
-    std::regex{"PLAYER,([AB]),([ \\w]+),(\\d+),(\\d+),(\\d+),(\\d+)"};
-
+    std::regex{R"(PLAYER,([AB]),([ \w]+),(\d+),(\d+),(\d+),(\d+))"};
 
 // ==-----------------------------------------------------------------------==
 //                        Functions definition
 // ==-----------------------------------------------------------------------==
-
 
 Metadata parse_metadata_file(std::string const &path) {
   namespace fs = std::filesystem;
