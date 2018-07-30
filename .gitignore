@@ -48,6 +48,7 @@ datasets/preprocessed/*
 !datasets/preprocessed/*.py
 !datasets/preprocessed/*.md
 
+test/resources
 
 ### Python ###
 __pycache__/
