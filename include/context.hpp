@@ -19,6 +19,14 @@ public:
   PlayerMap &get_players() { return players; }
   PlayerMap const &get_players() const { return players; }
 
+  std::vector<std::string> get_player_names() const {
+    return players.get_player_names();
+  }
+
+  std::vector<int> get_player_sids(std::string const &name) const {
+    return players.get_player_sids(name);
+  }
+
   void set_team_map(TeamMap const &teams) { this->teams = teams; }
   void set_team_map(TeamMap &&teams) { this->teams = std::move(teams); }
 
@@ -26,7 +34,7 @@ public:
   TeamMap const &get_teams() const { return teams; }
 
   void set_ball_map(BallMap const &balls) { this->balls = balls; }
-  void set_ball_map(BallMap const &&balls) { this->balls = std::move(balls); }
+  void set_ball_map(BallMap &&balls) { this->balls = std::move(balls); }
 
   BallMap &get_balls() { return balls; }
   BallMap const &get_balls() const { return balls; }
@@ -37,9 +45,14 @@ public:
     for (int sid : sids) {
       position_sids.insert({sid, idx});
     }
+
+    if (std::holds_alternative<BallPosition>(position)) {
+      ball_position_idx = idx;
+    }
   }
 
   Positions &get_position(int sid) { return positions[position_sids.at(sid)]; }
+  Positions &get_ball_position() { return positions[ball_position_idx]; }
 
 private:
   PlayerMap players = {};
@@ -47,6 +60,7 @@ private:
   BallMap balls = {};
 
   std::vector<Positions> positions = {};
+  std::vector<Positions>::size_type ball_position_idx = {};
   std::unordered_map<int, std::vector<Positions>::size_type> position_sids = {};
 };
 } // namespace game
