@@ -49,10 +49,10 @@ def load_half_game_interrupts(filename='1st Half.csv', valid_ids=['2011', '2010'
                     ms = int(time[9:12])
 
                 delta_timestamp = 0
-                delta_timestamp += hh * 60 * int(1e7)
-                delta_timestamp += mm * 60 * int(1e7)
-                delta_timestamp += ss * int(1e7)
-                delta_timestamp += ms * int(1e4)
+                delta_timestamp += hh * 60 * int(1e12)
+                delta_timestamp += mm * 60 * int(1e12)
+                delta_timestamp += ss * int(1e12)
+                delta_timestamp += ms * int(1e9)
 
                 timestamp = game_timestamps[half_index]['start'] + \
                     delta_timestamp
