@@ -57,22 +57,25 @@ PositionEvent EventFetcher::parse_next_event() {
             game_paused = false;
           }
         } else if (std::holds_alternative<PositionEvent>(event)) {
-          // Return PositionEvent
-          if (!game_paused) {
-            got_position_event = true;
-          } else {
-            // If the game is paused, we do not return the parsed event. Still,
-            // we need to update its sensor position, otherwise when the game
-            // resumes, the sensors would still be found at the very old
-            // position (which would be wrong)
-            auto pos_event = std::get<PositionEvent>(event);
-            auto &position = context.get_position(pos_event.get_sid());
-            std::visit(
-                [&pos_event](auto &&pos) {
-                  pos.update_sensor(pos_event.get_sid(),
-                                    pos_event.get_vector());
-                },
-                position);
+          auto pos_event = std::get<PositionEvent>(event);
+          auto event_sid = pos_event.get_sid();
+          if (context.get_balls().is_ball(event_sid) ||
+              context.get_players().is_player(event_sid)) {
+            if (!game_paused) {
+              got_position_event = true;
+            } else {
+              // If the game is paused, we do not return the parsed event.
+              // Still, we need to update its sensor position, otherwise when
+              // the game resumes, the sensors would still be found at the very
+              // old position (which would be wrong)
+              auto &position = context.get_position(pos_event.get_sid());
+              std::visit(
+                  [&pos_event](auto &&pos) {
+                    pos.update_sensor(pos_event.get_sid(),
+                                      pos_event.get_vector());
+                  },
+                  position);
+            }
           }
         } else {
           throw unexpected_event_error{};
@@ -86,7 +89,7 @@ PositionEvent EventFetcher::parse_next_event() {
     }
   }
   return std::get<PositionEvent>(event);
-}
+} // namespace game
 
 std::vector<PositionEvent> const &EventFetcher::parse_batch() {
   bool is_batch_full = false;
@@ -116,7 +119,7 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
 // ==-----------------------------------------------------------------------==
 
 const std::regex Dataset::se_re =
-    std::regex{"SE,(\\d+),(\\d+),(-?\\d+),(-?\\d+),(-?\\d+),.*"};
+    std::regex{R"(SE,(\d+),(\d+),(-?\d+),(-?\d+),(-?\d+),.*)"};
 const std::regex Dataset::gi_re = std::regex{
     "GI,(\\d+),([ "
     "\\w]+),(0|\\d{2}:\\d{2}:\\d{2}\\.\\d{3}),(\\d+),(\\d+),([ \\w]+)"};
