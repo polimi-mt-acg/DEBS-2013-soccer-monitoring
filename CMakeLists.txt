@@ -26,7 +26,8 @@ set(SOCCER_MONITORING_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event_fetcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp)
 
 add_executable(soccer-monitoring
         ${SOCCER_MONITORING_SRC}
@@ -34,8 +35,8 @@ add_executable(soccer-monitoring
 
 target_include_directories(soccer-monitoring
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/external
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/external
         )
 
 if (OPENMP_FOUND)
@@ -56,22 +57,34 @@ set(TEST_SOURCES
         ${SOCCER_MONITORING_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_metadata.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_event_fetcher.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_event_fetcher.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_distance.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_game_statistics.cpp)
 
 add_executable(tests ${TEST_SOURCES})
 
 target_include_directories(tests
         PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/test
-        ${CMAKE_CURRENT_SOURCE_DIR}/external
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/test
+            ${CMAKE_CURRENT_SOURCE_DIR}/external
         )
+
+target_compile_options(tests PUBLIC -fopenmp)
 
 target_link_libraries(tests
         PUBLIC
-        Catch
-        fmt-header-only
-        stdc++fs
+            Catch
+            fmt-header-only
+            stdc++fs
+            omp
         )
+
+target_compile_definitions(tests
+        PUBLIC
+            FULL_GAME="${CMAKE_CURRENT_SOURCE_DIR}/datasets/preprocessed/full-game"
+            GAME_DATA_START_10_10000="${CMAKE_CURRENT_SOURCE_DIR}/test/resources/game_data_start_10_10000"
+            GAME_DATA_START_10_100000="${CMAKE_CURRENT_SOURCE_DIR}/test/resources/game_data_start_10_100000"
+            GAME_DATA_START_10_1e7="${CMAKE_CURRENT_SOURCE_DIR}/test/resources/game_data_start_10_1e7")
 
 add_test(NAME tests COMMAND tests)
