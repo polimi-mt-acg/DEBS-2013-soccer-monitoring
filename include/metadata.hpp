@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "fmt/format.h"
@@ -48,7 +49,7 @@ public:
   std::string const &operator[](int const &sensor_id) const;
 
   std::vector<std::string> get_player_names() const;
-  std::vector<int> get_player_sids(std::string const& name) const;
+  std::vector<int> get_player_sids(std::string const &name) const;
 
 private:
   std::unordered_map<int, std::string> player = {};
@@ -56,6 +57,8 @@ private:
 };
 
 enum class Team { A = 1, B };
+
+std::ostream &operator<<(std::ostream &os, Team team);
 
 class TeamMap {
 public:
@@ -112,8 +115,8 @@ struct ParseMetadata {
 };
 
 struct file_not_found_error : public std::runtime_error {
-  explicit file_not_found_error(std::string const &path)
-      : runtime_error(""), path{path} {}
+  explicit file_not_found_error(std::string path)
+      : runtime_error(""), path{std::move(path)} {}
 
   const char *what() const throw() {
     auto str = fmt::format("File {} not found.", path);

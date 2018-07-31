@@ -56,6 +56,12 @@ std::vector<int> PlayerMap::get_player_sids(std::string const &name) const {
   }
 }
 
+std::ostream &operator<<(std::ostream &os, Team team) {
+  auto s = (team == Team::A ? "A" : "B");
+  os << s;
+  return os;
+}
+
 // ==-----------------------------------------------------------------------==
 //                        TeamMap implementation
 // ==-----------------------------------------------------------------------==

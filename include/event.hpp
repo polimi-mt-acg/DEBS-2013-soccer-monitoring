@@ -18,6 +18,10 @@ namespace game {
  */
 constexpr auto game_start = std::chrono::picoseconds{10753295594424116};
 
+constexpr auto break_start = std::chrono::picoseconds{12398000000000000};
+
+constexpr auto break_end = std::chrono::picoseconds{13086639146403495};
+
 /**
  * @brief The instant of game end (in picoseconds).
  */

@@ -18,7 +18,7 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
   // player
 #pragma omp parallel for
   for (std::size_t i = 0; i < player_names.size(); ++i) {
-    auto const& name = player_names[i];
+    auto const &name = player_names[i];
     auto sids = context.get_player_sids(name);
     auto &position = context.get_position(sids.front());
     auto &ball_position = context.get_ball_position();
@@ -62,7 +62,8 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
 
         // If distance is within maximum distance, add it. Otherwise set
         // distance to infinity
-        if (distance <= maximum_distance) {
+        // TODO: Make conversion more visible
+        if (distance / 1000 <= maximum_distance) {
           distances.push_back(distance);
         } else {
           distances.push_back(infinite_distance);
@@ -83,7 +84,8 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
 
   // If last batch for this period, output partial statistics
   if (period_last_batch) {
-    // TODO: Compute partial statistics
+    partials.push_back(partial_stats());
+    accumulator.clear();
   }
 }
 
@@ -123,5 +125,16 @@ void BallPossession::reduce(DistanceResults const &distance) {
       }
     }
   }
+}
+
+BallPossession::iterator BallPossession::begin() { return iterator{*this}; }
+BallPossession::const_iterator BallPossession::cbegin() const {
+  return const_iterator{*this};
+}
+BallPossession::iterator BallPossession::end() {
+  return iterator{*this, min_distances.size()};
+}
+BallPossession::const_iterator BallPossession::cend() const {
+  return const_iterator{*this, min_distances.size()};
 }
 } // namespace game

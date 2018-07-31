@@ -5,6 +5,7 @@
 #include "metadata.hpp"
 #include "test_dataset.hpp"
 
+#include <chrono>
 #include <iomanip>
 #include <map>
 #include <vector>
@@ -82,31 +83,10 @@ TEST_CASE("Test batch_stats computation") {
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 
-    for (int i = 0; i < 5; ++i) {
-      auto batch = fetcher.parse_batch();
+    for (auto const &batch : fetcher) {
       stats.batch_stats(batch, false);
       print_partial_stats(stats, context);
       fmt::print("\n");
     }
   }
-
-#ifdef GAME_DATA_START_10_1e7
-  SECTION("GAME_DATA_START_10_1e7 File Stream") {
-    std::size_t batch_size = 10000;
-    auto path = std::string{GAME_DATA_START_10_1e7};
-
-    fmt::print("Opening file {}...\n", path);
-    auto fetcher =
-        game::EventFetcher{path, game::file_stream{}, batch_size, context};
-    auto stats =
-        game::GameStatistics{game::GameStatistics::infinite_distance, context};
-
-    for (int i = 0; i < 100000; ++i) {
-      auto batch = fetcher.parse_batch();
-      stats.batch_stats(batch, false);
-      print_partial_stats(stats, context);
-      fmt::print("\n");
-    }
-  }
-#endif
 }
