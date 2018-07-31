@@ -22,11 +22,16 @@ find_package(OpenMP)
 # Fmtlib dependency
 add_subdirectory(external/fmt EXCLUDE_FROM_ALL)
 
+# Boost
+find_package(Boost REQUIRED COMPONENTS program_options)
+
 set(SOCCER_MONITORING_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/soccer_monitoring.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event_fetcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/visualizer.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp)
 
 add_executable(soccer-monitoring
@@ -43,7 +48,13 @@ if (OPENMP_FOUND)
     target_compile_options(soccer-monitoring PUBLIC -fopenmp)
 endif (OPENMP_FOUND)
 
-target_link_libraries(soccer-monitoring PUBLIC omp fmt-header-only stdc++fs)
+target_link_libraries(soccer-monitoring
+        PUBLIC
+            omp
+            fmt-header-only
+            stdc++fs
+            Boost::program_options
+        )
 
 # ==-----------------------------------------------------------------------== #
 #                               Unit tests
@@ -59,7 +70,7 @@ set(TEST_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_event_fetcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_distance.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_game_statistics.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_game_statistics.cpp test/test_visualizer.cpp)
 
 add_executable(tests ${TEST_SOURCES})
 
