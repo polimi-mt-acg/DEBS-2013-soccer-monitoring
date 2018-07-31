@@ -17,6 +17,8 @@
 namespace game {
 class GameStatistics {
 public:
+  static constexpr auto infinite_distance = std::numeric_limits<double>::max();
+
   explicit GameStatistics(double maximum_distance, Context &context)
       : maximum_distance{maximum_distance}, context{context} {
     player_names = context.get_player_names();
@@ -27,12 +29,16 @@ public:
 
   std::unordered_map<std::string, double> partial_stats() const;
 
-  static constexpr auto infinite_distance = std::numeric_limits<double>::max();
+  std::vector<std::unordered_map<std::string, double>> const &
+  get_partials() const {
+    return partials;
+  }
 
 private:
   Context &context;
   double maximum_distance = 0.0;
   std::vector<std::string> player_names = {};
+  std::vector<std::unordered_map<std::string, double>> partials = {};
   std::unordered_map<std::string, int> accumulator = {};
 };
 
@@ -67,8 +73,37 @@ private:
 //                              Ball Possession
 // ==-----------------------------------------------------------------------==
 namespace details {
-template <typename BallPossession, bool IsConst>
-class ball_possession_iterator {
+template <bool IsConst> class ball_possession_iterator; // Forward declared
+}
+
+class BallPossession {
+  friend class details::ball_possession_iterator<true>;
+  friend class details::ball_possession_iterator<false>;
+
+  using const_iterator = details::ball_possession_iterator<true>;
+  using iterator = details::ball_possession_iterator<false>;
+
+public:
+  static constexpr auto infinite_distance = std::numeric_limits<double>::max();
+  static const std::string none_player;
+
+  void reduce(DistanceResults const &distance);
+
+  iterator begin();
+  const_iterator cbegin() const;
+  iterator end();
+  const_iterator cend() const;
+
+private:
+  std::vector<std::string> closest_players = {};
+  std::vector<double> min_distances = {};
+};
+
+// ==-----------------------------------------------------------------------==
+//                        Ball Possession Iterator
+// ==-----------------------------------------------------------------------==
+namespace details {
+template <bool IsConst> class ball_possession_iterator {
 public:
   using difference_type = std::ptrdiff_t;
   using value_type = std::pair<double, std::string>;
@@ -76,7 +111,7 @@ public:
   using pointer = std::add_pointer_t<reference>;
   using iterator_category = std::input_iterator_tag;
 
-  using iterator = ball_possession_iterator<BallPossession, IsConst>;
+  using iterator = ball_possession_iterator<IsConst>;
 
   explicit ball_possession_iterator(BallPossession const &ballPossession,
                                     std::size_t index = 0)
@@ -112,7 +147,7 @@ public:
     return it;
   }
 
-  pointer operator->() const { return this; }
+  pointer operator->() const { return &current_value; }
 
   iterator &operator=(const iterator &other) {
     bp = other.bp;
@@ -135,33 +170,6 @@ private:
   std::pair<double, std::string> current_value;
 };
 } // namespace details
-
-class BallPossession {
-  friend class details::ball_possession_iterator<BallPossession, true>;
-  friend class details::ball_possession_iterator<BallPossession, false>;
-
-  using const_iterator =
-      details::ball_possession_iterator<BallPossession, true>;
-  using iterator = details::ball_possession_iterator<BallPossession, false>;
-
-public:
-  static constexpr auto infinite_distance = std::numeric_limits<double>::max();
-  static const std::string none_player;
-
-  void reduce(DistanceResults const &distance);
-
-  iterator begin() { return iterator{*this}; }
-  const_iterator cbegin() const { return const_iterator{*this}; }
-
-  iterator end() { return iterator{*this, min_distances.size()}; }
-  const_iterator cend() const {
-    return const_iterator{*this, min_distances.size()};
-  }
-
-private:
-  std::vector<std::string> closest_players = {};
-  std::vector<double> min_distances = {};
-};
 
 } // namespace game
 #endif // SOCCER_MONITORING_GAME_STATISTICS_H
