@@ -1,3 +1,5 @@
+#include <utility>
+
 #ifndef GAME_EVENT_FETCHER_H
 #define GAME_EVENT_FETCHER_H
 
@@ -19,6 +21,10 @@
 
 namespace game {
 
+namespace details {
+class event_fetcher_iterator;
+}
+
 /**
  * @brief Class to consume the streaming game events.
  * Initialized with the dataset source and the batch size it returns a batch of
@@ -26,6 +32,9 @@ namespace game {
  */
 class EventFetcher {
 public:
+  friend class details::event_fetcher_iterator;
+  using iterator = details::event_fetcher_iterator;
+
   /**
    * @brief Construct a new EventFetcher object with given batch size.
    *
@@ -59,6 +68,11 @@ public:
    */
   std::vector<PositionEvent> const &parse_batch();
 
+  bool is_valid_event(PositionEvent const& event) const;
+
+  iterator begin();
+  iterator end();
+
 private:
   Context &context;
   std::unique_ptr<std::istream> is = {};
@@ -78,12 +92,14 @@ struct Dataset {
   /**
    * @brief Game interruption id of GI event.
    */
-  static constexpr auto game_interruption_id = 2010;
+  static constexpr auto first_half_interruption_id = 2010;
+  static constexpr auto second_half_interruption_id = 6014;
 
   /**
    * @brief Game resume id of GI event.
    */
-  static constexpr auto game_resume_id = 2011;
+  static constexpr auto first_half_resume_id = 2011;
+  static constexpr auto second_half_resume_id = 6015;
 
   /**
    * @brief Regex for parsing SE events.
@@ -132,8 +148,8 @@ private:
  * expressions.
  */
 struct unknown_event_error : public std::runtime_error {
-  explicit unknown_event_error(std::string const &line)
-      : runtime_error(""), line{line} {}
+  explicit unknown_event_error(std::string line)
+      : runtime_error(""), line{std::move(line)} {}
 
   const char *what() const throw() {
     auto str = fmt::format("Line \"{}\" matches no known event", line);
@@ -169,6 +185,67 @@ private:
  */
 std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
 parse_event_line(std::string const &line);
+
+namespace details {
+class event_fetcher_iterator {
+public:
+  using difference_type = std::ptrdiff_t;
+  using value_type = std::vector<PositionEvent>;
+  using reference = const value_type &;
+  using pointer = std::add_pointer_t<reference>;
+  using iterator_category = std::input_iterator_tag;
+
+  using iterator = event_fetcher_iterator;
+
+  explicit event_fetcher_iterator(EventFetcher &f, bool set_end = false)
+      : fetcher{std::addressof(f)} {
+    // Set to end if set_end == true or if fetcher input stream failbit is set
+    // (i.e. EOF may be reached)
+    is_end = set_end ? true : !(*fetcher->is);
+  }
+
+  // CopyConstructible
+  event_fetcher_iterator(iterator const &other)
+      : fetcher{other.fetcher}, is_end{other.is_end} {}
+
+  // CopyAssignable
+  iterator &operator=(iterator const &other) {
+    fetcher = other.fetcher;
+    is_end = other.is_end;
+    return *this;
+  }
+
+  // Dereferenceable (convertible to value_type)
+  reference operator*() { return fetcher->batch; }
+  value_type operator*() const { return fetcher->batch; }
+
+  iterator &operator++() {
+    fetcher->parse_batch();
+    is_end = !(*fetcher->is);
+    return *this;
+  }
+
+  iterator operator++(int) {
+    auto it = *this;
+    this->operator++();
+    return it;
+  }
+
+  pointer operator->() const { return &fetcher->batch; }
+
+  friend bool operator==(iterator const &lhs, iterator const &rhs) {
+    return lhs.is_end == rhs.is_end;
+  }
+
+  friend bool operator!=(iterator const &lhs, iterator const &rhs) {
+    return !(lhs == rhs);
+  }
+
+private:
+  EventFetcher *fetcher;
+  bool is_end;
+};
+} // namespace details
 
 } // namespace game
 

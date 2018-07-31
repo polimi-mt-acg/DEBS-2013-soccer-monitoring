@@ -1,5 +1,6 @@
 #include "event_fetcher.hpp"
 
+#include <event_fetcher.hpp>
 #include <regex>
 #include <string>
 
@@ -98,8 +99,7 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
     try {
       auto position_event = parse_next_event();
       // If an in-game position event
-      if (position_event.get_timestamp() >= game::game_start &&
-          position_event.get_timestamp() < game_end) {
+      if (is_valid_event(position_event)) {
         batch.push_back(position_event);
         if (batch.size() == batch_size) {
           is_batch_full = true;
@@ -107,11 +107,22 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
       }
       // Otherwise, update positions to have them updated before game start
     } catch (std::ios_base::failure &ex) {
-      std::cout << ex.what() << "\n";
       return batch;
     }
   }
   return batch;
+}
+
+EventFetcher::iterator EventFetcher::begin() { return iterator{*this}; }
+
+EventFetcher::iterator EventFetcher::end() { return iterator{*this, true}; }
+
+bool EventFetcher::is_valid_event(PositionEvent const &event) const {
+  auto first_half = game_start <= event.get_timestamp() &&
+                    event.get_timestamp() <= break_start;
+  auto second_half =
+      break_end <= event.get_timestamp() && event.get_timestamp() <= game_end;
+  return first_half || second_half;
 }
 
 // ==-----------------------------------------------------------------------==
@@ -137,9 +148,11 @@ parse_event_line(std::string const &line) {
     auto event_id = std::stoi(match[Dataset::gi_re_event_id_idx].str());
     auto ts = std::stoll(match[Dataset::gi_re_timestamp_idx].str());
 
-    if (event_id == Dataset::game_interruption_id) {
+    if (event_id == Dataset::first_half_interruption_id ||
+        event_id == Dataset::second_half_interruption_id) {
       return InterruptionEvent{std::chrono::picoseconds{ts}};
-    } else if (event_id == Dataset::game_resume_id) {
+    } else if (event_id == Dataset::first_half_resume_id ||
+               event_id == Dataset::second_half_resume_id) {
       return ResumeEvent{std::chrono::picoseconds{ts}};
     } else {
       throw unknown_game_interruption_event_error{event_id};
