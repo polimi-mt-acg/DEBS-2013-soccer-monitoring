@@ -33,24 +33,75 @@ void run_game_monitoring(int time_units, double maximum_distance,
   }
 
   //= ----------------------- Business logic -------------------------------- =
-  auto visualizer = game::Visualizer{players, teams};
+  auto visualizer = game::Visualizer{players, teams, time_units};
   auto fetcher = game::EventFetcher{game_data.string(), game::file_stream{},
-                                    batch_size, context};
+                                    time_units, batch_size, context};
   auto stats = game::GameStatistics{maximum_distance, context};
 
   visualizer.draw();
   for (auto const &batch : fetcher) {
-    // TODO: Check if time_units are expired
-    stats.batch_stats(batch, false);
-    auto partials = stats.partial_stats();
-    visualizer.update_stats(partials);
-    visualizer.draw();
+    // Check if batch returned because time_units seconds are elapsed
+    auto is_period_last_batch = !batch.empty() && batch.size() < batch_size;
+    stats.batch_stats(batch, is_period_last_batch);
+
+    if (is_period_last_batch) {
+      auto const &partials = stats.last_partial();
+      visualizer.update_stats(partials);
+      visualizer.draw();
+    }
   }
+
+  fmt::print("-------- Game End. Final Statistics ---------\n\n");
+  auto game_stats = stats.game_stats();
+  visualizer.update_stats(game_stats, true);
+  visualizer.draw();
 }
 
 void run_game_monitoring(int time_units, double maximum_distance,
                          std::filesystem::path const &game_data,
                          std::filesystem::path const &metadata, int nb_threads,
                          std::size_t batch_size,
-                         std::string const &output_path) {}
+                         std::string const &output_path) {
+  //= -------------------------- Setup OpenMP ------------------------------- =
+  omp_set_num_threads(nb_threads);
+
+  //= --------------------- Setup game::Context ----------------------------- =
+  auto meta = game::parse_metadata_file(metadata.string());
+  auto &players = meta.players;
+  auto &teams = meta.teams;
+  auto &balls = meta.balls;
+
+  auto context = game::Context{};
+  context.set_player_map(players);
+  context.set_team_map(teams);
+  context.set_ball_map(balls);
+
+  for (auto &position : meta.positions) {
+    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
+    context.add_position(position, sids);
+  }
+
+  //= ----------------------- Business logic -------------------------------- =
+  auto visualizer = game::Visualizer{players, teams, time_units, output_path};
+  auto fetcher = game::EventFetcher{game_data.string(), game::file_stream{},
+                                    time_units, batch_size, context};
+  auto stats = game::GameStatistics{maximum_distance, context};
+
+  for (auto const &batch : fetcher) {
+    // Check if batch returned because time_units seconds are elapsed
+    auto is_period_last_batch = !batch.empty() && batch.size() < batch_size;
+    stats.batch_stats(batch, is_period_last_batch);
+
+    if (is_period_last_batch) {
+      auto const &partials = stats.last_partial();
+      visualizer.update_stats(partials);
+      visualizer.draw();
+    }
+  }
+
+  fmt::print("-------- Game End. Final Statistics ---------\n\n");
+  auto game_stats = stats.game_stats();
+  visualizer.update_stats(game_stats, true);
+  visualizer.draw();
+}
 } // namespace game
