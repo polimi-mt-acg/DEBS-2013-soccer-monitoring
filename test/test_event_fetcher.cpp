@@ -65,8 +65,9 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
       context.add_position(position, sids);
     }
 
-    auto fetcher =
-        game::EventFetcher(position_events, game::string_stream{}, 10, context);
+    int time_units = 90 * 60;
+    auto fetcher = game::EventFetcher(position_events, game::string_stream{},
+                                      time_units, 10, context);
 
     // Read all the position events and print them
     for (int i = 0; i < 9; ++i) {
@@ -80,6 +81,8 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
 
   SECTION("Test batch parsing") {
     std::size_t batch_size = 10;
+    int time_units = 90 * 60;
+
     auto meta = game::parse_metadata_string(metadata);
     auto &players = meta.players;
     auto &teams = meta.teams;
@@ -96,8 +99,9 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
       context.add_position(position, sids);
     }
 
-    auto fetcher = game::EventFetcher{
-        game_data_start_10_50, game::string_stream{}, batch_size, context};
+    auto fetcher =
+        game::EventFetcher{game_data_start_10_50, game::string_stream{},
+                           time_units, batch_size, context};
 
     const auto &first_batch = fetcher.parse_batch();
 
