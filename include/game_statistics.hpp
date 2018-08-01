@@ -27,12 +27,13 @@ public:
   void batch_stats(std::vector<PositionEvent> const &batch,
                    bool period_last_batch = false);
 
-  std::unordered_map<std::string, double> partial_stats() const;
-
+  std::unordered_map<std::string, double> accumulated_stats() const;
+  std::unordered_map<std::string, double> const &last_partial() const;
   std::vector<std::unordered_map<std::string, double>> const &
   get_partials() const {
     return partials;
   }
+  std::unordered_map<std::string, double> game_stats() const;
 
 private:
   Context &context;
@@ -40,6 +41,7 @@ private:
   std::vector<std::string> player_names = {};
   std::vector<std::unordered_map<std::string, double>> partials = {};
   std::unordered_map<std::string, int> accumulator = {};
+  std::unordered_map<std::string, int> game_accumulator = {};
 };
 
 class DistanceResults {
