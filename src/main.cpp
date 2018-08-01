@@ -14,7 +14,7 @@ struct Arguments {
   std::filesystem::path game_data;
   std::filesystem::path metadata;
   int nb_threads;
-  int batch_size;
+  std::size_t batch_size;
   std::filesystem::path output;
 };
 
@@ -30,8 +30,9 @@ Arguments parse_arguments(int argc, char *argv[]) {
       "stream,s", po::value<std::string>(), "Game stream file path")(
       "metadata,m", po::value<std::string>(), "Metadata file path")(
       "threads,t", po::value<int>()->default_value(0), "Number of threads")(
-      "batch-size,B", po::value<int>()->default_value(1500),
-      "Events batch size")("output,o", "Output file path (default: stdout)");
+      "batch-size,B", po::value<int>()->default_value(1500), "Events batch size (default: auto)")(
+      "output,o", po::value<std::string>(),
+      "Output file path (default: stdout)");
 
   po::variables_map vm;
   po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -104,6 +105,11 @@ Arguments parse_arguments(int argc, char *argv[]) {
           nb_threads);
       std::exit(1);
     }
+
+    if (nb_threads == 0) {
+      nb_threads = omp_get_max_threads();
+    }
+
     if (nb_threads > omp_get_max_threads()) {
       fmt::print("WARNING: You are setting a number of threads ({}) greater "
                  "than the number of logical threads of your machine ({}). "
@@ -115,22 +121,22 @@ Arguments parse_arguments(int argc, char *argv[]) {
     std::exit(1);
   }
 
-  int batch_size = 0;
+  int tmp_batch_size = 0;
+  std::size_t batch_size = 0;
   if (vm.count("batch-size")) {
-    batch_size = vm["batch-size"].as<int>();
-    if (batch_size < 1) {
+    tmp_batch_size = vm["batch-size"].as<int>();
+    if (tmp_batch_size < 1) {
       fmt::print("Invalid value for --batch-size: {}. Must be greater than 0",
-                 batch_size);
+                 tmp_batch_size);
       std::exit(1);
+    } else {
+      batch_size = static_cast<std::size_t>(tmp_batch_size);
     }
-  } else {
-    std::cout << "Missing mandatory argument: --batch-size\n" << desc;
-    std::exit(1);
   }
 
   auto output = fs::path{};
   if (vm.count("output")) {
-    game_data = fs::path{vm["output"].as<std::string>()};
+    output = vm["output"].as<std::string>();
   }
 
   return {time_units, max_distance, game_data, metadata,
