@@ -20,16 +20,14 @@ public:
     static_cast<Derived &>(*this).update_sensor(sid, vector);
   }
 
-  std::vector<int> const&get_sids() const {
+  std::vector<int> const &get_sids() const {
     return static_cast<Derived &>(*this).get_sids();
   }
 };
 
 class BallPosition : public Position<BallPosition> {
 public:
-  std::tuple<double, double, double> vector() const {
-    return {xs[game_ball], ys[game_ball], zs[game_ball]};
-  }
+  std::tuple<double, double, double> vector() const;
 
   void update_sensor(int sid, std::tuple<int, int, int> vector);
 
@@ -45,13 +43,15 @@ public:
   std::vector<int> const &get_sids() const { return sids; }
 
 private:
-  std::size_t game_ball = -1;
+  std::size_t game_ball = out_range_idx;
   std::vector<int> sids = {};
   std::vector<int> xs = {};
   std::vector<int> ys = {};
   std::vector<int> zs = {};
 
   std::size_t sid_index(int sid) const;
+  static constexpr auto out_range_idx = std::numeric_limits<std::size_t>::max();
+  static constexpr auto inf = std::numeric_limits<double>::max();
 };
 
 class PlayerPosition : public Position<PlayerPosition> {
