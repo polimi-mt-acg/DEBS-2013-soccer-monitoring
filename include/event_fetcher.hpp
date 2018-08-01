@@ -45,7 +45,7 @@ public:
    * @param batch_size The size of the batch of parsed PositionEvent.
    */
   template <typename Stream>
-  EventFetcher(std::string const &, Stream, std::size_t batch_size,
+  EventFetcher(std::string const &, Stream, int time_units, std::size_t batch_size,
                Context &context);
 
   /**
@@ -78,6 +78,8 @@ private:
   std::unique_ptr<std::istream> is = {};
   bool game_paused = false;
   std::vector<PositionEvent> batch = {};
+  int time_units = 0;
+  std::chrono::picoseconds period_start;
   std::size_t batch_size = 0;
 };
 

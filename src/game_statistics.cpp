@@ -5,6 +5,7 @@
 #include "game_statistics.hpp"
 #include "distance.hpp"
 
+#include <game_statistics.hpp>
 #include <string>
 
 namespace game {
@@ -71,7 +72,7 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
       }
     }
 
-#pragma omp critical
+#pragma omp critical(possession_update)
     { ball_possession.reduce(distances); };
   }
 
@@ -84,12 +85,16 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
 
   // If last batch for this period, output partial statistics
   if (period_last_batch) {
-    partials.push_back(partial_stats());
+    partials.push_back(accumulated_stats());
+    for (auto const &[player_name, hits] : accumulator) {
+      game_accumulator[player_name] += hits;
+    }
     accumulator.clear();
   }
 }
 
-std::unordered_map<std::string, double> GameStatistics::partial_stats() const {
+std::unordered_map<std::string, double>
+GameStatistics::accumulated_stats() const {
   auto total =
       std::accumulate(accumulator.cbegin(), accumulator.cend(), 0,
                       [](int acc, auto &&pair) { return acc + pair.second; });
@@ -99,8 +104,27 @@ std::unordered_map<std::string, double> GameStatistics::partial_stats() const {
   for (auto const &[name, nb_possessions] : accumulator) {
     partials.insert({name, static_cast<double>(nb_possessions) / total});
   }
+
   return partials;
 }
+
+std::unordered_map<std::string, double> const &
+GameStatistics::last_partial() const {
+  return partials.back();
+}
+
+std::unordered_map<std::string, double> GameStatistics::game_stats() const {
+  auto stats = std::unordered_map<std::string, double>();
+  auto total =
+      std::accumulate(game_accumulator.cbegin(), game_accumulator.cend(), 0,
+                      [](int acc, auto &&pair) { return acc + pair.second; });
+
+  for (auto const &[name, nb_possessions] : game_accumulator) {
+    stats.insert({name, static_cast<double>(nb_possessions) / total});
+  }
+
+  return stats;
+} // namespace game
 
 const std::string BallPossession::none_player = "None"s;
 

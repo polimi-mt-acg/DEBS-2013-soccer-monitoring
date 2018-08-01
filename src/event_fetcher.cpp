@@ -14,8 +14,10 @@ namespace game {
 
 template <>
 EventFetcher::EventFetcher(std::string const &path, game::file_stream,
-                           std::size_t batch_size, Context &context)
-    : batch_size{batch_size}, context{context} {
+                           int time_units, std::size_t batch_size,
+                           Context &context)
+    : time_units{time_units}, batch_size{batch_size}, context{context},
+      period_start{game_start} {
   // Open a file stream
   is = std::make_unique<std::ifstream>(path, std::ios_base::in);
 
@@ -25,8 +27,10 @@ EventFetcher::EventFetcher(std::string const &path, game::file_stream,
 
 template <>
 EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
-                           std::size_t batch_size, Context &context)
-    : batch_size{batch_size}, context{context} {
+                           int time_units, std::size_t batch_size,
+                           Context &context)
+    : time_units{time_units}, batch_size{batch_size}, context{context},
+      period_start{game_start} {
   // Open a string stream
   is = std::make_unique<std::istringstream>(dataset);
 
@@ -35,17 +39,14 @@ EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
 }
 
 PositionEvent EventFetcher::parse_next_event() {
-  bool got_position_event = false;
-  auto event = std::variant<std::monostate, PositionEvent, InterruptionEvent,
-                            ResumeEvent>{};
-  while (!got_position_event) {
+  while (true) {
     if (*is) {
       // Get an event line
       std::string line{};
       auto &read_ok = std::getline(*is, line);
 
       if (read_ok) {
-        event = parse_event_line(line);
+        auto event = parse_event_line(line);
 
         if (std::holds_alternative<InterruptionEvent>(event)) {
           // If interruption, go next
@@ -62,21 +63,7 @@ PositionEvent EventFetcher::parse_next_event() {
           auto event_sid = pos_event.get_sid();
           if (context.get_balls().is_ball(event_sid) ||
               context.get_players().is_player(event_sid)) {
-            if (!game_paused) {
-              got_position_event = true;
-            } else {
-              // If the game is paused, we do not return the parsed event.
-              // Still, we need to update its sensor position, otherwise when
-              // the game resumes, the sensors would still be found at the very
-              // old position (which would be wrong)
-              auto &position = context.get_position(pos_event.get_sid());
-              std::visit(
-                  [&pos_event](auto &&pos) {
-                    pos.update_sensor(pos_event.get_sid(),
-                                      pos_event.get_vector());
-                  },
-                  position);
-            }
+            return pos_event;
           }
         } else {
           throw unexpected_event_error{};
@@ -89,20 +76,42 @@ PositionEvent EventFetcher::parse_next_event() {
       throw std::ios_base::failure{"No new line available. Reached EOF."};
     }
   }
-  return std::get<PositionEvent>(event);
-} // namespace game
+}
 
 std::vector<PositionEvent> const &EventFetcher::parse_batch() {
-  bool is_batch_full = false;
+  bool is_batch_ready = false;
   batch.clear(); // Delete previous batch
-  while (!is_batch_full) {
+  while (!is_batch_ready) {
     try {
       auto position_event = parse_next_event();
+
+      // In any case, we need to update its sensor position, otherwise when
+      // the game resumes, the sensors would still be found at the very
+      // old position (which would be wrong)
+      auto &position = context.get_position(position_event.get_sid());
+      std::visit(
+          [&position_event](auto &&pos) {
+            pos.update_sensor(position_event.get_sid(),
+                              position_event.get_vector());
+          },
+          position);
+
       // If an in-game position event
       if (is_valid_event(position_event)) {
-        batch.push_back(position_event);
+        auto event_ts = position_event.get_timestamp();
+        auto elapsed_time = event_ts - period_start;
+
+        if (elapsed_time > std::chrono::seconds(time_units)) {
+          period_start = event_ts;
+          is_batch_ready = true;
+        }
+
+        if (!game_paused) {
+          batch.push_back(position_event);
+        }
+
         if (batch.size() == batch_size) {
-          is_batch_full = true;
+          is_batch_ready = true;
         }
       }
       // Otherwise, update positions to have them updated before game start

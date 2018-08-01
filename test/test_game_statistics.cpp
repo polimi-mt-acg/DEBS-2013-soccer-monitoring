@@ -30,7 +30,7 @@ void print_possession(game::BallPossession &possession) {
 
 void print_partial_stats(game::GameStatistics const &stats,
                          game::Context const &context) {
-  auto partials = stats.partial_stats();
+  auto partials = stats.accumulated_stats();
   auto sorted =
       std::map<std::string, double>(partials.cbegin(), partials.cend());
   std::cout << std::left << std::setw(20) << std::setfill(' ') << "Player";
@@ -78,8 +78,11 @@ TEST_CASE("Test batch_stats computation") {
 
   SECTION("10_50 String Stream") {
     std::size_t batch_size = 10;
-    auto fetcher = game::EventFetcher{
-        game_data_start_10_50, game::string_stream{}, batch_size, context};
+    int time_units = 90 * 60;
+
+    auto fetcher =
+        game::EventFetcher{game_data_start_10_50, game::string_stream{},
+                           time_units, batch_size, context};
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 

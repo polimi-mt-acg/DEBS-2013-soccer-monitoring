@@ -22,41 +22,24 @@ TEST_CASE("Test Visualizer") {
     context.add_position(position, sids);
   }
 
-  auto visualizer = game::Visualizer{players, teams};
-
   SECTION("10_50 String Stream") {
     std::size_t batch_size = 10;
-    auto fetcher = game::EventFetcher{
-        game_data_start_10_50, game::string_stream{}, batch_size, context};
+    int time_units = 90 * 60;
+
+    auto fetcher =
+        game::EventFetcher{game_data_start_10_50, game::string_stream{},
+                           time_units, batch_size, context};
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
+
+    auto visualizer = game::Visualizer{players, teams, time_units};
     visualizer.draw();
 
     for (auto const &batch : fetcher) {
       stats.batch_stats(batch, false);
-      auto partials = stats.partial_stats();
+      auto partials = stats.accumulated_stats();
       visualizer.update_stats(partials);
       visualizer.draw();
     }
   }
-
-#ifdef GAME_DATA_START_10_1e7
-  SECTION("GAME_DATA_START_10_1e7 File Stream") {
-    std::size_t batch_size = 1500;
-    auto path = std::string{GAME_DATA_START_10_1e7};
-
-    fmt::print("Opening file {}...\n", path);
-    auto fetcher =
-        game::EventFetcher{path, game::file_stream{}, batch_size, context};
-    auto stats =
-        game::GameStatistics{game::GameStatistics::infinite_distance, context};
-
-    for (auto const &batch : fetcher) {
-      stats.batch_stats(batch, false);
-      auto partials = stats.partial_stats();
-      visualizer.update_stats(partials);
-      visualizer.draw();
-    }
-  }
-#endif
 }

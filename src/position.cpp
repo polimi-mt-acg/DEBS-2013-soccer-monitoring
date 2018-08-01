@@ -62,5 +62,20 @@ void BallPosition::update_sensor(int sid, std::tuple<int, int, int> vector) {
       y <= field_upper_y) {
     game_ball = idx;
   }
+
+  // If the game ball goes outside, it's no longer the game ball
+  auto is_outside = x < field_lower_x || x > field_upper_x ||
+                    y < field_lower_y || y > field_upper_y;
+  if (idx == game_ball && is_outside) {
+    game_ball = out_range_idx;
+  }
+}
+
+std::tuple<double, double, double> BallPosition::vector() const {
+  if (game_ball != out_range_idx) {
+    return {xs[game_ball], ys[game_ball], zs[game_ball]};
+  } else {
+    return {inf, inf, inf};
+  }
 }
 } // namespace game
