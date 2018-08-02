@@ -78,9 +78,9 @@ private:
 using Positions = std::variant<BallPosition, PlayerPosition>;
 
 template <typename Iter> double mean(Iter first, Iter end) {
-  auto sum = std::accumulate(first, end, 0.0f);
+  auto sum = std::accumulate(first, end, 0.0);
   auto n = std::distance(first, end);
-  return static_cast<double>(sum) / n;
+  return sum / n;
 }
 
 } // namespace game
