@@ -14,21 +14,22 @@ using namespace std::literals;
 void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
                                  bool period_last_batch) {
   auto ball_possession = BallPossession{};
+  auto ball_position = context.get_ball_position();
 
   // For each player, scan the batch only for events of sensors worn by that
   // player
-#pragma omp parallel for
+#pragma omp parallel for shared(context) firstprivate(ball_position)           \
+    lastprivate(ball_position)
   for (std::size_t i = 0; i < player_names.size(); ++i) {
     auto const &name = player_names[i];
-    auto sids = context.get_player_sids(name);
-    auto &position = context.get_position(sids.front());
-    auto &ball_position = context.get_ball_position();
+    auto const &sids = context.get_player_sids(name);
+    auto position = context.get_position(sids.front());
 
     auto mine = [&sids](int sid) {
       return std::find(sids.cbegin(), sids.cend(), sid) != sids.cend();
     };
 
-    auto as_vector = [](auto &&pos) -> std::tuple<float, float, float> {
+    auto as_vector = [](auto &&pos) -> std::tuple<double, double, double> {
       return std::visit([](auto &&p) { return p.vector(); }, pos);
     };
 
@@ -73,8 +74,16 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
     }
 
 #pragma omp critical(possession_update)
-    { ball_possession.reduce(distances); };
+    {
+      ball_possession.reduce(distances); // Reduce step
+
+      // Restore last player position
+      context.get_position(sids.front()) = position;
+    };
   }
+
+  // Write back to context the last ball position
+  context.get_ball_position() = ball_position;
 
   // Update partial statistics
   for (auto const &[d, player_name] : ball_possession) {
