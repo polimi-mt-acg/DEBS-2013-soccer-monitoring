@@ -45,8 +45,8 @@ public:
    * @param batch_size The size of the batch of parsed PositionEvent.
    */
   template <typename Stream>
-  EventFetcher(std::string const &, Stream, int time_units, std::size_t batch_size,
-               Context &context);
+  EventFetcher(std::string const &, Stream, int time_units,
+               std::size_t batch_size, Context &context);
 
   /**
    * @brief Parses next in-game PositionEvent. If next event is an
@@ -66,9 +66,10 @@ public:
    *
    * @return the batch of PositionEvent.
    */
-  std::vector<PositionEvent> const &parse_batch();
+  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
+  parse_batch();
 
-  bool is_valid_event(PositionEvent const& event) const;
+  bool is_valid_event(PositionEvent const &event) const;
 
   iterator begin();
   iterator end();
@@ -192,7 +193,8 @@ namespace details {
 class event_fetcher_iterator {
 public:
   using difference_type = std::ptrdiff_t;
-  using value_type = std::vector<PositionEvent>;
+  using value_type =
+      std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>;
   using reference = const value_type &;
   using pointer = std::add_pointer_t<reference>;
   using iterator_category = std::input_iterator_tag;
@@ -200,7 +202,8 @@ public:
   using iterator = event_fetcher_iterator;
 
   explicit event_fetcher_iterator(EventFetcher &f, bool set_end = false)
-      : fetcher{std::addressof(f)} {
+      : fetcher{std::addressof(f)}, value{std::make_pair(
+                                        std::cref(fetcher->batch), false)} {
     // Set to end if set_end == true or if fetcher input stream failbit is set
     // (i.e. EOF may be reached)
     is_end = set_end ? true : !(*fetcher->is);
@@ -208,21 +211,22 @@ public:
 
   // CopyConstructible
   event_fetcher_iterator(iterator const &other)
-      : fetcher{other.fetcher}, is_end{other.is_end} {}
+      : fetcher{other.fetcher}, is_end{other.is_end}, value{other.value} {}
 
   // CopyAssignable
   iterator &operator=(iterator const &other) {
     fetcher = other.fetcher;
     is_end = other.is_end;
+    value = other.value;
     return *this;
   }
 
   // Dereferenceable (convertible to value_type)
-  reference operator*() { return fetcher->batch; }
-  value_type operator*() const { return fetcher->batch; }
+  reference operator*() { return value; }
+  value_type operator*() const { return value; }
 
   iterator &operator++() {
-    fetcher->parse_batch();
+    value = fetcher->parse_batch();
     is_end = !(*fetcher->is);
     return *this;
   }
@@ -233,7 +237,7 @@ public:
     return it;
   }
 
-  pointer operator->() const { return &fetcher->batch; }
+  pointer operator->() const { return &value; }
 
   friend bool operator==(iterator const &lhs, iterator const &rhs) {
     return lhs.is_end == rhs.is_end;
@@ -245,6 +249,8 @@ public:
 
 private:
   EventFetcher *fetcher;
+  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
+      value;
   bool is_end;
 };
 } // namespace details
