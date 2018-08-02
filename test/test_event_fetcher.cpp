@@ -103,7 +103,7 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
         game::EventFetcher{game_data_start_10_50, game::string_stream{},
                            time_units, batch_size, context};
 
-    const auto &first_batch = fetcher.parse_batch();
+    const auto &first_batch = fetcher.parse_batch().first.get();
 
     // Batch has BATCH_SIZE size
     REQUIRE(first_batch.size() == batch_size);

@@ -86,7 +86,7 @@ TEST_CASE("Test batch_stats computation") {
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 
-    for (auto const &batch : fetcher) {
+    for (auto const &[batch, is_period_last_batch] : fetcher) {
       stats.batch_stats(batch, false);
       print_partial_stats(stats, context);
       fmt::print("\n");

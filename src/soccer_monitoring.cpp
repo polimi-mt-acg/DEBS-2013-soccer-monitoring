@@ -40,9 +40,8 @@ void run_game_monitoring(int time_units, double maximum_distance,
 
   visualizer.draw();
   auto t1 = std::chrono::steady_clock::now();
-  for (auto const &batch : fetcher) {
+  for (auto const &[batch, is_period_last_batch] : fetcher) {
     // Check if batch returned because time_units seconds are elapsed
-    auto is_period_last_batch = !batch.empty() && batch.size() < batch_size;
     stats.batch_stats(batch, is_period_last_batch);
 
     if (is_period_last_batch) {
@@ -95,9 +94,8 @@ void run_game_monitoring(int time_units, double maximum_distance,
                                     time_units, batch_size, context};
   auto stats = game::GameStatistics{maximum_distance, context};
 
-  for (auto const &batch : fetcher) {
+  for (auto const &[batch, is_period_last_batch] : fetcher) {
     // Check if batch returned because time_units seconds are elapsed
-    auto is_period_last_batch = !batch.empty() && batch.size() < batch_size;
     stats.batch_stats(batch, is_period_last_batch);
 
     if (is_period_last_batch) {

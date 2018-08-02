@@ -78,10 +78,10 @@ PositionEvent EventFetcher::parse_next_event() {
   }
 }
 
-std::vector<PositionEvent> const &EventFetcher::parse_batch() {
-  bool is_batch_ready = false;
+std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
+EventFetcher::parse_batch() {
   batch.clear(); // Delete previous batch
-  while (!is_batch_ready) {
+  while (true) {
     try {
       auto position_event = parse_next_event();
 
@@ -103,7 +103,7 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
 
         if (elapsed_time > std::chrono::seconds(time_units)) {
           period_start = event_ts;
-          is_batch_ready = true;
+          return {std::cref(batch), true};
         }
 
         if (!game_paused) {
@@ -111,15 +111,14 @@ std::vector<PositionEvent> const &EventFetcher::parse_batch() {
         }
 
         if (batch.size() == batch_size) {
-          is_batch_ready = true;
+          return {std::cref(batch), false};
         }
       }
       // Otherwise, update positions to have them updated before game start
     } catch (std::ios_base::failure &ex) {
-      return batch;
+      return {std::cref(batch), true};
     }
   }
-  return batch;
 }
 
 EventFetcher::iterator EventFetcher::begin() { return iterator{*this}; }
