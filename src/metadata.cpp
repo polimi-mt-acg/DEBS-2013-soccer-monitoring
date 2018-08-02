@@ -47,7 +47,8 @@ std::vector<std::string> PlayerMap::get_player_names() const {
   return names;
 }
 
-std::vector<int> PlayerMap::get_player_sids(std::string const &name) const {
+std::vector<int> const &
+PlayerMap::get_player_sids(std::string const &name) const {
   if (const auto find = sids.find(name); find != sids.cend()) {
     return find->second;
   } else {

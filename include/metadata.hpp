@@ -49,7 +49,7 @@ public:
   std::string const &operator[](int const &sensor_id) const;
 
   std::vector<std::string> get_player_names() const;
-  std::vector<int> get_player_sids(std::string const &name) const;
+  std::vector<int> const &get_player_sids(std::string const &name) const;
 
 private:
   std::unordered_map<int, std::string> player = {};
