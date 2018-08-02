@@ -23,7 +23,7 @@ public:
     return players.get_player_names();
   }
 
-  std::vector<int> get_player_sids(std::string const &name) const {
+  std::vector<int> const &get_player_sids(std::string const &name) const {
     return players.get_player_sids(name);
   }
 
