@@ -8,18 +8,9 @@
 #include <ostream>
 #include <string>
 
+#include "details/partials_cmp.hpp"
+
 namespace game {
-namespace details {
-struct PartialsCmp {
-  explicit PartialsCmp(TeamMap const &teams) : teams{std::addressof(teams)} {}
-
-  bool operator()(std::string const &p1, std::string const &p2) const;
-
-private:
-  TeamMap const *teams;
-};
-} // namespace details
-
 class Visualizer {
 public:
   Visualizer(PlayerMap const &players, TeamMap const &teams, int time_units);
