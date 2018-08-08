@@ -1,9 +1,3 @@
-#include <utility>
-
-//
-// Created by leonardoarcari on 27/07/18.
-//
-
 #ifndef SOCCER_MONITORING_GAME_STATISTICS_H
 #define SOCCER_MONITORING_GAME_STATISTICS_H
 
@@ -12,6 +6,7 @@
 
 #include <limits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace game {
