@@ -48,7 +48,15 @@ public:
    */
   std::string const &operator[](int const &sensor_id) const;
 
+  /**
+   * @return the list of all player names.
+   */
   std::vector<std::string> get_player_names() const;
+
+  /**
+   * @param name The player name.
+   * @return the list of sensor ids attached to player @p name.
+   */
   std::vector<int> const &get_player_sids(std::string const &name) const;
 
 private:
@@ -56,13 +64,35 @@ private:
   std::unordered_map<std::string, std::vector<int>> sids = {};
 };
 
+/**
+ * Enumerates the team names.
+ */
 enum class Team { A = 1, B };
 
+/**
+ * Operator<< overload for game::Team.
+ */
 std::ostream &operator<<(std::ostream &os, Team team);
 
+/**
+ * A mapping between players and the team they play in.
+ */
 class TeamMap {
 public:
+  /**
+   * Registers a player in a team.
+   * @param player The player name.
+   * @param team The team the player plays in.
+   */
   void add_player(std::string const &player, Team team);
+
+  /**
+   * Get the team of a player (if registered).
+   *
+   * @param player The player name.
+   * @return The team the player plays in.
+   * @throws std::out_of_range if no player with name @p player is registered.
+   */
   Team operator[](std::string const &player) const;
 
 private:
@@ -95,14 +125,21 @@ private:
   std::vector<int> balls = {};
 };
 
+/**
+ * The game metadata.
+ */
 struct Metadata {
-  PlayerMap players;
-  TeamMap teams;
-  BallMap balls;
+  PlayerMap players; ///< The game players names and sensors.
+  TeamMap teams;     ///< The game teams.
+  BallMap balls;     ///< The game balls and sensors.
 
+  ///< The positions of players and balls on the field.
   std::vector<Positions> positions;
 };
 
+/**
+ * Constants for parsing metadata from dataset.
+ */
 struct ParseMetadata {
   static const std::regex ball_re;
   static constexpr auto ball_re_sid_idx = 2;
@@ -114,6 +151,9 @@ struct ParseMetadata {
   static constexpr auto player_re_sid_end_idx = 6;
 };
 
+/**
+ * An error reporting that a given file could not be found on the file system.
+ */
 struct file_not_found_error : public std::runtime_error {
   explicit file_not_found_error(std::string path)
       : runtime_error(""), path{std::move(path)} {}
@@ -127,8 +167,18 @@ private:
   std::string path;
 };
 
+/**
+ * Parses metadata from a file.
+ * @param path The metadata file path.
+ * @return The game metadata.
+ */
 Metadata parse_metadata_file(std::string const &path);
 
+/**
+ * Parses metadata from a string.
+ * @param path The metadata string.
+ * @return The game metadata.
+ */
 Metadata parse_metadata_string(std::string const &metadata);
 } // namespace game
 
