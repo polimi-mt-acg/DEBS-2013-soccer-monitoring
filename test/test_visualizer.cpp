@@ -36,7 +36,7 @@ TEST_CASE("Test Visualizer") {
     visualizer.draw();
 
     for (auto const &[batch, is_period_last_batch] : fetcher) {
-      stats.batch_stats(batch, false);
+      stats.accumulate_stats(batch, false);
       auto partials = stats.accumulated_stats();
       visualizer.update_stats(partials);
       visualizer.draw();

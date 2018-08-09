@@ -11,9 +11,9 @@
 namespace game {
 using namespace std::literals;
 
-void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
-                                 bool period_last_batch) {
-  auto ball_possession = BallPossession{};
+void GameStatistics::accumulate_stats(const std::vector<PositionEvent> &batch,
+                                      bool period_last_batch) {
+  auto ball_possession = details::BallPossession{};
   auto ball_position = context.get_ball_position();
 
   // For each player, scan the batch only for events of sensors worn by that
@@ -33,7 +33,7 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
       return std::visit([](auto &&p) { return p.vector(); }, pos);
     };
 
-    auto distances = DistanceResults{name};
+    auto distances = details::DistanceResults{name};
     for (auto const &event : batch) {
       auto event_sid = event.get_sid();
 
@@ -87,7 +87,7 @@ void GameStatistics::batch_stats(const std::vector<PositionEvent> &batch,
 
   // Update partial statistics
   for (auto const &[d, player_name] : ball_possession) {
-    if (player_name != BallPossession::none_player) {
+    if (player_name != details::BallPossession::none_player) {
       ++accumulator[player_name];
     }
   }
@@ -133,41 +133,5 @@ std::unordered_map<std::string, double> GameStatistics::game_stats() const {
   }
 
   return stats;
-} // namespace game
-
-const std::string BallPossession::none_player = "None"s;
-
-void BallPossession::reduce(DistanceResults const &distance) {
-  if (min_distances.empty()) {
-    // Initialize internal containers
-    min_distances.insert(min_distances.begin(), distance.cbegin(),
-                         distance.cend());
-
-    for (auto const &d : min_distances) {
-      if (d == infinite_distance) {
-        closest_players.push_back(none_player);
-      } else {
-        closest_players.push_back(distance.get_player_name());
-      }
-    }
-  } else {
-    for (std::size_t i = 0; i < min_distances.size(); ++i) {
-      if (distance[i] < min_distances[i]) {
-        min_distances[i] = distance[i];
-        closest_players[i] = distance.get_player_name();
-      }
-    }
-  }
-}
-
-BallPossession::iterator BallPossession::begin() { return iterator{*this}; }
-BallPossession::const_iterator BallPossession::cbegin() const {
-  return const_iterator{*this};
-}
-BallPossession::iterator BallPossession::end() {
-  return iterator{*this, min_distances.size()};
-}
-BallPossession::const_iterator BallPossession::cend() const {
-  return const_iterator{*this, min_distances.size()};
 }
 } // namespace game

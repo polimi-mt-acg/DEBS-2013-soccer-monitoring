@@ -1,5 +1,6 @@
 #include "catch.hpp"
 
+#include "details/game_statistics_impl.hpp"
 #include "event_fetcher.hpp"
 #include "game_statistics.hpp"
 #include "metadata.hpp"
@@ -12,9 +13,10 @@
 
 #include "fmt/format.h"
 
-game::DistanceResults build_distance_results(std::string const &name,
-                                             std::vector<double> &&distances) {
-  auto results = game::DistanceResults{name};
+game::details::DistanceResults
+build_distance_results(std::string const &name,
+                       std::vector<double> &&distances) {
+  auto results = game::details::DistanceResults{name};
   for (auto d : distances) {
     results.push_back(d);
   }
@@ -22,7 +24,7 @@ game::DistanceResults build_distance_results(std::string const &name,
   return results;
 }
 
-void print_possession(game::BallPossession &possession) {
+void print_possession(game::details::BallPossession &possession) {
   for (const auto &[distance, name] : possession) {
     fmt::print("{} is the closest player (distance: {})\n", name, distance);
   }
@@ -53,14 +55,14 @@ TEST_CASE("Test ball possession iterator") {
   auto distance_2 = build_distance_results(
       "Player 2", {3, 2, 1, 1, game::GameStatistics::infinite_distance});
 
-  auto possession = game::BallPossession{};
+  auto possession = game::details::BallPossession{};
   possession.reduce(distance_1);
   print_possession(possession);
   possession.reduce(distance_2);
   print_possession(possession);
 }
 
-TEST_CASE("Test batch_stats computation") {
+TEST_CASE("Test accumulate_stats computation") {
   auto meta = game::parse_metadata_string(metadata);
   auto &players = meta.players;
   auto &teams = meta.teams;
@@ -87,7 +89,7 @@ TEST_CASE("Test batch_stats computation") {
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 
     for (auto const &[batch, is_period_last_batch] : fetcher) {
-      stats.batch_stats(batch, false);
+      stats.accumulate_stats(batch, false);
       print_partial_stats(stats, context);
       fmt::print("\n");
     }
