@@ -8,7 +8,7 @@
 #include <ostream>
 #include <string>
 
-#include "details/partials_cmp.hpp"
+#include "details/visualizer_impl.hpp"
 
 namespace game {
 class Visualizer {

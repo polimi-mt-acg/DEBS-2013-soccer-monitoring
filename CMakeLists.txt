@@ -32,7 +32,9 @@ set(SOCCER_MONITORING_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/visualizer.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/game_statistics_impl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/visualizer_impl.cpp)
 
 add_executable(soccer-monitoring
         ${SOCCER_MONITORING_SRC}
@@ -56,6 +58,13 @@ target_link_libraries(soccer-monitoring
             Boost::program_options
         )
 
+# Profiling option
+option(PERF_PROFILING "Enable compilation flags for Linux Perf profiling" OFF)
+if(PERF_PROFILING)
+    target_compile_options(soccer-monitoring PUBLIC "-g" "-fno-omit-frame-pointer")
+endif(PERF_PROFILING)
+
+
 # ==-----------------------------------------------------------------------== #
 #                               Unit tests
 # ==-----------------------------------------------------------------------== #
@@ -70,7 +79,8 @@ set(TEST_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_event_fetcher.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test/test_distance.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_game_statistics.cpp test/test_visualizer.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_game_statistics.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/test_visualizer.cpp)
 
 add_executable(tests ${TEST_SOURCES})
 
