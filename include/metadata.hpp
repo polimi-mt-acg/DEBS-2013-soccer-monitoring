@@ -22,7 +22,7 @@ class PlayerMap {
 public:
   /**
    * @brief Stores a mapping between a sensor and a player. If the sensor is
-   * already registered, the player is not added.
+   *        already registered, the player is not added.
    *
    * @param sensor_id The sensor id of a sensor of @p player.
    * @param player The player wearing the sensor identified by @p sensor_id.
@@ -34,7 +34,7 @@ public:
    *
    * @param sensor_id The sensor id.
    * @return true If a sensor with @p sensor_id is registered.
-   * @return false otherwise.
+   *         false otherwise.
    */
   bool is_player(int sensor_id) const;
 
@@ -44,7 +44,7 @@ public:
    * @param sensor_id The sensor id.
    * @return std::string const& The player wearing the sensor.
    * @throws std::out_of_range if no player is wearing a sensor with @p
-   * sensor_id.
+   *         sensor_id.
    */
   std::string const &operator[](int const &sensor_id) const;
 
@@ -110,7 +110,7 @@ public:
    *
    * @param sensor_id The sensor id.
    * @return true If a sensor with @p sensor_id is registered.
-   * @return false otherwise.
+   *         false otherwise.
    */
   bool is_ball(int sensor_id) const;
 
