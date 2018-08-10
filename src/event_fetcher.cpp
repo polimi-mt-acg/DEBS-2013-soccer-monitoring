@@ -139,9 +139,9 @@ bool EventFetcher::is_valid_event(PositionEvent const &event) const {
 
 const std::regex Dataset::se_re =
     std::regex{R"(SE,(\d+),(\d+),(-?\d+),(-?\d+),(-?\d+),.*)"};
-const std::regex Dataset::gi_re = std::regex{
-    "GI,(\\d+),([ "
-    "\\w]+),(0|\\d{2}:\\d{2}:\\d{2}\\.\\d{3}),(\\d+),(\\d+),([ \\w]+)"};
+const std::regex Dataset::gi_re =
+    std::regex{"GI,(\\d+),[ "
+               "\\w]+,(?:0|\\d{2}:\\d{2}:\\d{2}\\.\\d{3}),(\\d+),.*"};
 
 // ==-----------------------------------------------------------------------==
 //                      Functions definition
@@ -151,7 +151,16 @@ std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
 parse_event_line(std::string const &line) {
   auto match = std::smatch{};
 
-  if (std::regex_match(line, match, Dataset::gi_re)) {
+  if (std::regex_match(line, match, Dataset::se_re)) {
+    // If Position event get fields
+    auto sid = std::stoi(match[Dataset::se_re_sid_idx].str());
+    auto ts = std::stoll(match[Dataset::se_re_timestamp_idx].str());
+    auto x = std::stoi(match[Dataset::se_re_x_idx].str());
+    auto y = std::stoi(match[Dataset::se_re_y_idx].str());
+    auto z = std::stoi(match[Dataset::se_re_z_idx].str());
+
+    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
+  } else if (std::regex_match(line, match, Dataset::gi_re)) {
     // If Game Interruption event, get event id and timestamp
     auto event_id = std::stoi(match[Dataset::gi_re_event_id_idx].str());
     auto ts = std::stoll(match[Dataset::gi_re_timestamp_idx].str());
@@ -165,15 +174,6 @@ parse_event_line(std::string const &line) {
     } else {
       throw unknown_game_interruption_event_error{event_id};
     }
-  } else if (std::regex_match(line, match, Dataset::se_re)) {
-    // If Position event get fields
-    auto sid = std::stoi(match[Dataset::se_re_sid_idx].str());
-    auto ts = std::stoll(match[Dataset::se_re_timestamp_idx].str());
-    auto x = std::stoi(match[Dataset::se_re_x_idx].str());
-    auto y = std::stoi(match[Dataset::se_re_y_idx].str());
-    auto z = std::stoi(match[Dataset::se_re_z_idx].str());
-
-    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
   } else {
     throw unknown_event_error{line};
   }
