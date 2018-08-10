@@ -34,7 +34,8 @@ set(SOCCER_MONITORING_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/src/visualizer.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/details/game_statistics_impl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/visualizer_impl.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/visualizer_impl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/event_fetcher_impl.cpp)
 
 add_executable(soccer-monitoring
         ${SOCCER_MONITORING_SRC}

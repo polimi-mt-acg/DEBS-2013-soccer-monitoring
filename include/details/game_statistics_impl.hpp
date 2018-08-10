@@ -41,7 +41,7 @@ private:
 // ==-----------------------------------------------------------------------==
 //                              Ball Possession
 // ==-----------------------------------------------------------------------==
-template <bool IsConst> class ball_possession_iterator; // Forward declared
+template <bool IsConst> class ball_possession_iterator; // Forward-declared
 
 class BallPossession {
   friend class details::ball_possession_iterator<true>;
@@ -79,8 +79,8 @@ public:
 
   using iterator = ball_possession_iterator<IsConst>;
 
-  explicit ball_possession_iterator(BallPossession const &ballPossession,
-                                    std::size_t index = 0)
+  ball_possession_iterator(BallPossession const &ballPossession,
+                           std::size_t index = 0)
       : bp{ballPossession}, index{index} {
     if (index < bp.min_distances.size()) {
       current_value =
