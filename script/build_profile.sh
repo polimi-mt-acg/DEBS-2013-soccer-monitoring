@@ -14,5 +14,5 @@ fi
 mkdir -p $APPLICATION_ROOT/cmake-build-profile
 cd $APPLICATION_ROOT/cmake-build-profile
 cmake -DPERF_PROFILING=ON -DCMAKE_BUILD_TYPE=Release ..
-make
+make soccer-monitoring -j2
 

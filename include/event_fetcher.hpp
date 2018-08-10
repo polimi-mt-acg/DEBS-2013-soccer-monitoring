@@ -4,6 +4,7 @@
 #define GAME_EVENT_FETCHER_H
 
 #include "context.hpp"
+#include "details/event_fetcher_impl.hpp"
 #include "event.hpp"
 #include "stream_types.hpp"
 
@@ -20,11 +21,6 @@
 #include "fmt/format.h"
 
 namespace game {
-
-namespace details {
-class event_fetcher_iterator;
-}
-
 /**
  * @brief Class to consume the streaming game events.
  * Initialized with the dataset source and the batch size it returns a batch of
@@ -127,7 +123,7 @@ struct Dataset {
   //        GI regex's group indices
   // =------------------------------------------=
   static constexpr auto gi_re_event_id_idx = 1;
-  static constexpr auto gi_re_timestamp_idx = 4;
+  static constexpr auto gi_re_timestamp_idx = 2;
 };
 
 /**
@@ -188,73 +184,6 @@ private:
  */
 std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
 parse_event_line(std::string const &line);
-
-namespace details {
-class event_fetcher_iterator {
-public:
-  using difference_type = std::ptrdiff_t;
-  using value_type =
-      std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>;
-  using reference = const value_type &;
-  using pointer = std::add_pointer_t<reference>;
-  using iterator_category = std::input_iterator_tag;
-
-  using iterator = event_fetcher_iterator;
-
-  explicit event_fetcher_iterator(EventFetcher &f, bool set_end = false)
-      : fetcher{std::addressof(f)}, value{std::make_pair(
-                                        std::cref(fetcher->batch), false)} {
-    // Set to end if set_end == true or if fetcher input stream failbit is set
-    // (i.e. EOF may be reached)
-    is_end = set_end ? true : !(*fetcher->is);
-  }
-
-  // CopyConstructible
-  event_fetcher_iterator(iterator const &other)
-      : fetcher{other.fetcher}, is_end{other.is_end}, value{other.value} {}
-
-  // CopyAssignable
-  iterator &operator=(iterator const &other) {
-    fetcher = other.fetcher;
-    is_end = other.is_end;
-    value = other.value;
-    return *this;
-  }
-
-  // Dereferenceable (convertible to value_type)
-  reference operator*() { return value; }
-  value_type operator*() const { return value; }
-
-  iterator &operator++() {
-    value = fetcher->parse_batch();
-    is_end = !(*fetcher->is);
-    return *this;
-  }
-
-  iterator operator++(int) {
-    auto it = *this;
-    this->operator++();
-    return it;
-  }
-
-  pointer operator->() const { return &value; }
-
-  friend bool operator==(iterator const &lhs, iterator const &rhs) {
-    return lhs.is_end == rhs.is_end;
-  }
-
-  friend bool operator!=(iterator const &lhs, iterator const &rhs) {
-    return !(lhs == rhs);
-  }
-
-private:
-  EventFetcher *fetcher;
-  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
-      value;
-  bool is_end;
-};
-} // namespace details
-
 } // namespace game
 
 #endif
