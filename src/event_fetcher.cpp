@@ -1,12 +1,84 @@
 #include "event_fetcher.hpp"
 
-#include <event_fetcher.hpp>
+#include <boost/algorithm/string.hpp>
 #include <regex>
 #include <string>
 
 #include "event.hpp"
 
 namespace game {
+// ==-----------------------------------------------------------------------==
+//              Event lines parsers - Regex-based and Custom
+// ==-----------------------------------------------------------------------==
+template <>
+std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
+parse_event_line(std::string const &line, game::parser_regex) {
+  auto match = std::smatch{};
+
+  if (std::regex_match(line, match, Dataset::se_re)) {
+    // If Position event get fields
+    auto sid = std::stoi(match[Dataset::se_re_sid_idx].str());
+    auto ts = std::stoll(match[Dataset::se_re_timestamp_idx].str());
+    auto x = std::stoi(match[Dataset::se_re_x_idx].str());
+    auto y = std::stoi(match[Dataset::se_re_y_idx].str());
+    auto z = std::stoi(match[Dataset::se_re_z_idx].str());
+
+    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
+  } else if (std::regex_match(line, match, Dataset::gi_re)) {
+    // If Game Interruption event, get event id and timestamp
+    auto event_id = std::stoi(match[Dataset::gi_re_event_id_idx].str());
+    auto ts = std::stoll(match[Dataset::gi_re_timestamp_idx].str());
+
+    if (event_id == Dataset::first_half_interruption_id ||
+        event_id == Dataset::second_half_interruption_id) {
+      return InterruptionEvent{std::chrono::picoseconds{ts}};
+    } else if (event_id == Dataset::first_half_resume_id ||
+               event_id == Dataset::second_half_resume_id) {
+      return ResumeEvent{std::chrono::picoseconds{ts}};
+    } else {
+      throw unknown_game_interruption_event_error{event_id};
+    }
+  } else {
+    throw unknown_event_error{line};
+  }
+}
+
+template <>
+std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
+parse_event_line(std::string const &line, game::parser_custom) {
+  using boost::is_any_of, boost::token_compress_on;
+  auto tokens = std::vector<std::string>{};
+
+  boost::split(tokens, line, is_any_of(","));
+
+  auto event_type = tokens[Dataset::event_type_idx];
+  if (event_type == "SE") {
+    // Unpack SE fields
+    auto sid = std::stoi(tokens[Dataset::se_sid_idx]);
+    auto ts = std::stoll(tokens[Dataset::se_timestamp_idx]);
+    auto x = std::stoi(tokens[Dataset::se_x_idx]);
+    auto y = std::stoi(tokens[Dataset::se_y_idx]);
+    auto z = std::stoi(tokens[Dataset::se_z_idx]);
+
+    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
+  } else if (event_type == "GI") {
+    // Unpack GI fields
+    auto event_id = std::stoi(tokens[Dataset::gi_event_id_idx]);
+    auto ts = std::stoll(tokens[Dataset::gi_timestamp_idx]);
+
+    if (event_id == Dataset::first_half_interruption_id ||
+        event_id == Dataset::second_half_interruption_id) {
+      return InterruptionEvent{std::chrono::picoseconds{ts}};
+    } else if (event_id == Dataset::first_half_resume_id ||
+               event_id == Dataset::second_half_resume_id) {
+      return ResumeEvent{std::chrono::picoseconds{ts}};
+    } else {
+      throw unknown_game_interruption_event_error{event_id};
+    }
+  } else {
+    throw unknown_event_error{line};
+  }
+}
 
 // ==-----------------------------------------------------------------------==
 //                     EventFetcher implementation
@@ -37,7 +109,6 @@ EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
   // Reserve storage in batch
   batch.reserve(batch_size);
 }
-
 PositionEvent EventFetcher::parse_next_event() {
   while (true) {
     if (*is) {
@@ -46,7 +117,7 @@ PositionEvent EventFetcher::parse_next_event() {
       auto &read_ok = std::getline(*is, line);
 
       if (read_ok) {
-        auto event = parse_event_line(line);
+        auto event = parse_event_line(line, game::parser_custom{});
 
         if (std::holds_alternative<InterruptionEvent>(event)) {
           // If interruption, go next
@@ -142,40 +213,4 @@ const std::regex Dataset::se_re =
 const std::regex Dataset::gi_re =
     std::regex{"GI,(\\d+),[ "
                "\\w]+,(?:0|\\d{2}:\\d{2}:\\d{2}\\.\\d{3}),(\\d+),.*"};
-
-// ==-----------------------------------------------------------------------==
-//                      Functions definition
-// ==-----------------------------------------------------------------------==
-
-std::variant<std::monostate, PositionEvent, InterruptionEvent, ResumeEvent>
-parse_event_line(std::string const &line) {
-  auto match = std::smatch{};
-
-  if (std::regex_match(line, match, Dataset::se_re)) {
-    // If Position event get fields
-    auto sid = std::stoi(match[Dataset::se_re_sid_idx].str());
-    auto ts = std::stoll(match[Dataset::se_re_timestamp_idx].str());
-    auto x = std::stoi(match[Dataset::se_re_x_idx].str());
-    auto y = std::stoi(match[Dataset::se_re_y_idx].str());
-    auto z = std::stoi(match[Dataset::se_re_z_idx].str());
-
-    return PositionEvent{sid, std::chrono::picoseconds{ts}, x, y, z};
-  } else if (std::regex_match(line, match, Dataset::gi_re)) {
-    // If Game Interruption event, get event id and timestamp
-    auto event_id = std::stoi(match[Dataset::gi_re_event_id_idx].str());
-    auto ts = std::stoll(match[Dataset::gi_re_timestamp_idx].str());
-
-    if (event_id == Dataset::first_half_interruption_id ||
-        event_id == Dataset::second_half_interruption_id) {
-      return InterruptionEvent{std::chrono::picoseconds{ts}};
-    } else if (event_id == Dataset::first_half_resume_id ||
-               event_id == Dataset::second_half_resume_id) {
-      return ResumeEvent{std::chrono::picoseconds{ts}};
-    } else {
-      throw unknown_game_interruption_event_error{event_id};
-    }
-  } else {
-    throw unknown_event_error{line};
-  }
-}
 } // namespace game
