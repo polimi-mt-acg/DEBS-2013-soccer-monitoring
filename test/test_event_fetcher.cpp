@@ -13,11 +13,26 @@
 TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
   using namespace std::literals;
 
-  SECTION("Test dataset event parsing") {
+  SECTION("Test dataset event parsing with Regex") {
     const auto event_line =
         "SE,69,10632029737813340,27679,-221,1011,553570,2481132,-9441,2048,2580,-8913,1107,4396"s;
     auto expected_timestamp = std::chrono::picoseconds{10632029737813340};
-    auto event = game::parse_event_line(event_line);
+    auto event = game::parse_event_line(event_line, game::parser_regex{});
+    REQUIRE(std::holds_alternative<game::PositionEvent>(event));
+
+    auto position_event = std::get<game::PositionEvent>(event);
+    REQUIRE(69 == position_event.get_sid());
+    REQUIRE(expected_timestamp == position_event.get_timestamp());
+    REQUIRE(27679 == position_event.get_x());
+    REQUIRE(-221 == position_event.get_y());
+    REQUIRE(1011 == position_event.get_z());
+  }
+
+  SECTION("Test dataset event parsing with Custom") {
+    const auto event_line =
+        "SE,69,10632029737813340,27679,-221,1011,553570,2481132,-9441,2048,2580,-8913,1107,4396"s;
+    auto expected_timestamp = std::chrono::picoseconds{10632029737813340};
+    auto event = game::parse_event_line(event_line, game::parser_custom{});
     REQUIRE(std::holds_alternative<game::PositionEvent>(event));
 
     auto position_event = std::get<game::PositionEvent>(event);

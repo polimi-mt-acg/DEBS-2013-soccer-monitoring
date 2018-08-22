@@ -28,7 +28,6 @@ public:
    * @param player The player wearing the sensor identified by @p sensor_id.
    */
   void add_sensor(int sensor_id, std::string const &player);
-
   /**
    * @brief Checks if a sensor is registered as worn by a player.
    *
@@ -37,7 +36,6 @@ public:
    *         false otherwise.
    */
   bool is_player(int sensor_id) const;
-
   /**
    * @brief Get the player wearing the passed sensor (if any).
    *
@@ -47,12 +45,10 @@ public:
    *         sensor_id.
    */
   std::string const &operator[](int const &sensor_id) const;
-
   /**
    * @return the list of all player names.
    */
   std::vector<std::string> get_player_names() const;
-
   /**
    * @param name The player name.
    * @return the list of sensor ids attached to player @p name.
@@ -85,7 +81,6 @@ public:
    * @param team The team the player plays in.
    */
   void add_player(std::string const &player, Team team);
-
   /**
    * Get the team of a player (if registered).
    *
@@ -113,7 +108,6 @@ public:
    *         false otherwise.
    */
   bool is_ball(int sensor_id) const;
-
   /**
    * @brief Register that a sensor is wrapped by a ball.
    *
@@ -173,7 +167,6 @@ private:
  * @return The game metadata.
  */
 Metadata parse_metadata_file(std::string const &path);
-
 /**
  * Parses metadata from a string.
  * @param path The metadata string.

@@ -26,7 +26,6 @@ public:
    * Infinite distance value.
    */
   static constexpr auto infinite_distance = std::numeric_limits<double>::max();
-
   /**
    * Constructs a GameStatistics object.
    *
@@ -38,7 +37,6 @@ public:
       : maximum_distance{maximum_distance}, context{context} {
     player_names = context.get_player_names();
   }
-
   /**
    * Accumulate statistics from a batch of game::PositionEvent. Statistics are
    * computed as following: 0) Let B be the ball position before calling
@@ -64,19 +62,16 @@ public:
    */
   void accumulate_stats(std::vector<PositionEvent> const &batch,
                         bool period_last_batch = false);
-
   /**
    * @return the accumulated statistics for the current period, for each player.
    *         Each value is percentage of ball possession for a given player in
    *         the current time units slot.
    */
   std::unordered_map<std::string, double> accumulated_stats() const;
-
   /**
    * @return the last computed partial statistics.
    */
   std::unordered_map<std::string, double> const &last_partial() const;
-
   /**
    * @return the computed ball possession statistics of the whole game, for each
    *         player. Each value is the percentage of ball possession for a given

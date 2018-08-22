@@ -27,13 +27,11 @@ public:
   std::tuple<double, double, double> vector() const {
     return static_cast<Derived &>(*this).vector();
   }
-
   /**
    * Add a sensor to this entity to track.
    * @param sid The sensor id.
    */
   void add_sensor(int sid) { static_cast<Derived &>(*this).add_sensor(sid); }
-
   /**
    * Updates the position of a sensor
    * @param sid The sensor id which position to update.
@@ -42,7 +40,6 @@ public:
   void update_sensor(int sid, std::tuple<int, int, int> vector) {
     static_cast<Derived &>(*this).update_sensor(sid, vector);
   }
-
   /**
    * @return the list of sensor ids attached to this entity.
    */
@@ -64,12 +61,10 @@ public:
    *         A (inf, inf, inf) vector in case no ball is on the field.
    */
   std::tuple<double, double, double> vector() const;
-
   /**
    * Implementation of game::Position::update_sensor().
    */
   void update_sensor(int sid, std::tuple<int, int, int> vector);
-
   /**
    * Implementation of game::Position::add_sensor().
    *
@@ -83,7 +78,6 @@ public:
 
     game_ball = sids.size() - 1; // Set last add ball as the game one
   }
-
   /**
    * Implementation of game::Position::get_sids().
    */
@@ -114,12 +108,10 @@ public:
    * that dimension of the values of each sensor.
    */
   std::tuple<double, double, double> vector() const;
-
   /**
    * Implementation of game::Position::update_sensor().
    */
   void update_sensor(int sid, std::tuple<int, int, int> vector);
-
   /**
    * Implementation of game::Position::add_sensor().
    */
@@ -129,7 +121,6 @@ public:
     ys.push_back(0);
     zs.push_back(0);
   }
-
   /**
    * Implementation of game::Position::get_sids().
    */
