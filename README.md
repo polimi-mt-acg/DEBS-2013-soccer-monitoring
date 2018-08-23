@@ -37,3 +37,5 @@ script/build_release.sh # For release build (i.e. optimizations enabled)
 ```bash
 build/tests
 ```
+## Performance
+Check [docs](docs) for information about the application scalability.
