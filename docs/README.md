@@ -88,8 +88,8 @@ def make_dse_df(data):
     index = [str(t) for t in nb_threads]
 
     df = pd.DataFrame(data=batch_time, columns=columns, index=index)
-    speedup = (df['1e+0'].T / df.T).T - 1
-    speedup['1e+0'] += 2e-2
+    speedup = (df.loc['1'] / df) - 1
+    speedup.loc['1'] += 2e-2
     speedup = speedup.rename(columns={'BatchTime': 'Speedup'})
     return df, speedup
 
@@ -120,13 +120,13 @@ idx_max = speedup_scatter.idxmax()
 max_point = speedup_scatter.iloc[idx_max['SpeedUp']]
 max_nb_threads = int(max_point['NbThreads'])
 max_batch_size = int(max_point['BatchSize'])
-print('Max speedup: {:1.3f}%'.format(max_point['SpeedUp']))
+print('Max speedup: {:1.3f}%'.format(max_point['SpeedUp'] * 100))
 print('  NbThreads: {:d}'.format(max_nb_threads))
 print('  BatchSize: {:d}'.format(max_batch_size))
 ```
 
-    Max speedup: 4.179%
-      NbThreads: 8
+    Max speedup: 33.272%
+      NbThreads: 4
       BatchSize: 1000000
 
 
@@ -162,7 +162,7 @@ speedup_t.plot.bar(y='Speedup', legend=False, title='Speedup (%) [NbThreads = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f9e47c90160>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f13eede47f0>
 
 
 
@@ -191,7 +191,7 @@ speedup_b.plot.bar(y='Speedup', legend=False, title='Speedup (%) [BatchSize = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f9e47970940>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f13eeffb048>
 
 
 
