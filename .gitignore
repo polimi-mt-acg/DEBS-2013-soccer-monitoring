@@ -53,6 +53,7 @@ test/resources
 ### Python ###
 __pycache__/
 *.py[cod]
+*.npy
 
 # Jupyter
 **/.ipynb_checkpoints
