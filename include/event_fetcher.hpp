@@ -7,6 +7,7 @@
 #include "details/event_fetcher_impl.hpp"
 #include "event.hpp"
 #include "stream_types.hpp"
+#include "batch.hpp"
 
 #include <exception>
 #include <fstream>
@@ -15,6 +16,7 @@
 #include <regex>
 #include <sstream>
 #include <string_view>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -59,8 +61,7 @@ public:
    *
    * @return the batch of PositionEvent.
    */
-  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
-  parse_batch();
+  Batch parse_batch();
   /**
    * Tests whether an event is valid to be added to a batch, i.e. its timestamp
    * is within the first half or the second half of the game.
@@ -202,9 +203,8 @@ private:
   std::string line;
 };
 
-
 struct parser_regex {};
-struct parser_custom{};
+struct parser_custom {};
 
 /**
  * @brief Parse a single event line into an event.

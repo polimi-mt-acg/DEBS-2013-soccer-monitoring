@@ -5,17 +5,18 @@
 #include <utility>
 #include <vector>
 
+#include "batch.hpp"
 #include "event.hpp"
 
 namespace game {
 class EventFetcher; // Forward-declared
+class Batch;
 
 namespace details {
 class event_fetcher_iterator {
 public:
   using difference_type = std::ptrdiff_t;
-  using value_type =
-      std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>;
+  using value_type = Batch;
   using reference = const value_type &;
   using pointer = std::add_pointer_t<reference>;
   using iterator_category = std::input_iterator_tag;
@@ -50,8 +51,7 @@ public:
 
 private:
   EventFetcher *fetcher;
-  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
-      value;
+  Batch value;
   bool is_end;
 };
 } // namespace details

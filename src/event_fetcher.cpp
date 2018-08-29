@@ -109,6 +109,7 @@ EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
   // Reserve storage in batch
   batch.reserve(batch_size);
 }
+
 PositionEvent EventFetcher::parse_next_event() {
   while (true) {
     if (*is) {
@@ -149,14 +150,13 @@ PositionEvent EventFetcher::parse_next_event() {
   }
 }
 
-std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
-EventFetcher::parse_batch() {
+Batch EventFetcher::parse_batch() {
   batch.clear(); // Delete previous batch
+  auto snapshot = std::unordered_map<std::string, Positions>{};
   while (true) {
     try {
       auto position_event = parse_next_event();
-
-      // In any case, we need to update its sensor position, otherwise when
+      // We need to update its sensor position, otherwise when
       // the game resumes, the sensors would still be found at the very
       // old position (which would be wrong)
       auto &position = context.get_position(position_event.get_sid());
@@ -174,20 +174,26 @@ EventFetcher::parse_batch() {
 
         if (elapsed_time > std::chrono::seconds(time_units)) {
           period_start = event_ts;
-          return {std::cref(batch), true};
+          if (!game_paused) {
+            batch.push_back(position_event);
+          }
+          return {std::cref(batch), true, std::move(snapshot)};
         }
 
         if (!game_paused) {
+          if (batch.empty()) {
+            snapshot = context.take_snapshot();
+          }
           batch.push_back(position_event);
         }
 
         if (batch.size() == batch_size) {
-          return {std::cref(batch), false};
+          return {std::cref(batch), false, std::move(snapshot)};
         }
       }
       // Otherwise, update positions to have them updated before game start
     } catch (std::ios_base::failure &ex) {
-      return {std::cref(batch), true};
+      return {std::cref(batch), true, std::move(snapshot)};
     }
   }
 }

@@ -1,8 +1,9 @@
 #ifndef SOCCER_MONITORING_GAME_STATISTICS_H
 #define SOCCER_MONITORING_GAME_STATISTICS_H
 
-#include "details/game_statistics_impl.hpp"
+#include "batch.hpp"
 #include "context.hpp"
+#include "details/game_statistics_impl.hpp"
 #include "event.hpp"
 
 #include <limits>
@@ -56,12 +57,9 @@ public:
    * statistics are computed as the weighted average of the number of ball
    * possessions and the accumulator is cleared.
    *
-   * @param batch the input batch of PositionEvents
-   * @param period_last_batch true if the input batch is the last one for the
-   *        current T time units. false otherwise.
+   * @param batch The Batch to compute statistics on
    */
-  void accumulate_stats(std::vector<PositionEvent> const &batch,
-                        bool period_last_batch = false);
+  void accumulate_stats(game::Batch const &batch);
   /**
    * @return the accumulated statistics for the current period, for each player.
    *         Each value is percentage of ball possession for a given player in

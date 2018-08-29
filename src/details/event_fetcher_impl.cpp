@@ -4,8 +4,8 @@
 namespace game {
 namespace details {
 event_fetcher_iterator::event_fetcher_iterator(EventFetcher &f, bool set_end)
-    : fetcher{std::addressof(f)}, value{std::make_pair(
-                                      std::cref(fetcher->batch), false)} {
+    : fetcher{std::addressof(f)}, value{fetcher->batch, false,
+                                        fetcher->context.take_snapshot()} {
   // Set to end if set_end == true or if fetcher input stream failbit is set
   // (i.e. EOF may be reached)
   is_end = set_end ? true : !(*fetcher->is);

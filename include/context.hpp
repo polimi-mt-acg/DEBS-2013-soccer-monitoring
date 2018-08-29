@@ -10,6 +10,13 @@
 
 namespace game {
 /**
+ * A snapshot of the position of players and ball on the field. It maps a player
+ * name to its position. Additionally, it maps the key "Ball" to the ball
+ * position.
+ */
+using Snapshot = std::unordered_map<std::string, Positions>;
+
+/**
  * The game monitoring context. This class carries the state of the game
  * monitoring while the dataset is streamed and statistics are computed.
  *
@@ -94,26 +101,35 @@ public:
    * @param position the entity game::Position
    * @param sids the list of sensor ids attached to the entity
    */
-  void add_position(Positions const &position, std::vector<int> const &sids) {
-    positions.push_back(position);
-    auto idx = positions.size() - 1;
-    for (int sid : sids) {
-      position_sids.insert({sid, idx});
-    }
-
-    if (std::holds_alternative<BallPosition>(position)) {
-      ball_position_idx = idx;
-    }
-  }
+  void add_position(Positions const &position, std::vector<int> const &sids);
   /**
    * @param sid the sensor id
    * @return the game::Position of the entity wearing the input sensor @p sid.
    */
   Positions &get_position(int sid) { return positions[position_sids.at(sid)]; }
   /**
+   * @param sid the sensor id
+   * @return the game::Position of the entity wearing the input sensor @p sid.
+   */
+  Positions const &get_position(int sid) const {
+    return positions[position_sids.at(sid)];
+  }
+  /**
    * @return the game::Position of the ball
    */
   Positions &get_ball_position() { return positions[ball_position_idx]; }
+  /**
+   * @return the game::Position of the ball
+   */
+  Positions const &get_ball_position() const {
+    return positions[ball_position_idx];
+  }
+  /**
+   * Takes a Snapshot of the Position of players and ball on the field. @see
+   * game::Snapshot for details.
+   * @return the Snapshot of the field
+   */
+  Snapshot take_snapshot() const;
 
 private:
   PlayerMap players = {};

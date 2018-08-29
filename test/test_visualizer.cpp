@@ -35,8 +35,8 @@ TEST_CASE("Test Visualizer") {
     auto visualizer = game::Visualizer{players, teams, time_units};
     visualizer.draw();
 
-    for (auto const &[batch, is_period_last_batch] : fetcher) {
-      stats.accumulate_stats(batch, false);
+    for (auto const &batch : fetcher) {
+      stats.accumulate_stats(batch);
       auto partials = stats.accumulated_stats();
       visualizer.update_stats(partials);
       visualizer.draw();

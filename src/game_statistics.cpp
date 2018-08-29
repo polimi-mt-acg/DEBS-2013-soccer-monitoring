@@ -5,25 +5,24 @@
 #include "game_statistics.hpp"
 #include "distance.hpp"
 
+#include <batch.hpp>
 #include <game_statistics.hpp>
 #include <string>
 
 namespace game {
 using namespace std::literals;
 
-void GameStatistics::accumulate_stats(const std::vector<PositionEvent> &batch,
-                                      bool period_last_batch) {
+void GameStatistics::accumulate_stats(const game::Batch &batch) {
   auto ball_possession = details::BallPossession{};
-  auto ball_position = context.get_ball_position();
+  auto ball_position = batch.snapshot.at("Ball");
 
   // For each player, scan the batch only for events of sensors worn by that
   // player
-#pragma omp parallel for shared(context) firstprivate(ball_position)           \
-    lastprivate(ball_position)
+#pragma omp parallel for shared(context) firstprivate(ball_position)
   for (std::size_t i = 0; i < player_names.size(); ++i) {
     auto const &name = player_names[i];
     auto const &sids = context.get_player_sids(name);
-    auto position = context.get_position(sids.front());
+    auto position = batch.snapshot.at(name);
 
     auto mine = [&sids](int sid) {
       return std::find(sids.cbegin(), sids.cend(), sid) != sids.cend();
@@ -34,7 +33,7 @@ void GameStatistics::accumulate_stats(const std::vector<PositionEvent> &batch,
     };
 
     auto distances = details::DistanceResults{name};
-    for (auto const &event : batch) {
+    for (auto const &event : batch.data.get()) {
       auto event_sid = event.get_sid();
 
       // If player sensor, check if mine
@@ -76,14 +75,8 @@ void GameStatistics::accumulate_stats(const std::vector<PositionEvent> &batch,
 #pragma omp critical(possession_update)
     {
       ball_possession.reduce(distances); // Reduce step
-
-      // Restore last player position
-      context.get_position(sids.front()) = position;
     };
   }
-
-  // Write back to context the last ball position
-  context.get_ball_position() = ball_position;
 
   // Update partial statistics
   for (auto const &[d, player_name] : ball_possession) {
@@ -93,7 +86,7 @@ void GameStatistics::accumulate_stats(const std::vector<PositionEvent> &batch,
   }
 
   // If last batch for this period, output partial statistics
-  if (period_last_batch) {
+  if (batch.is_period_last_batch) {
     partials.push_back(accumulated_stats());
     for (auto const &[player_name, hits] : accumulator) {
       game_accumulator[player_name] += hits;
