@@ -68,7 +68,7 @@ op_path = Path('./operating_points.npy')
 if is_demo and op_path.is_file():
     data = np.load(str(op_path))
 else:
-    data = np.zeros((len(nb_threads), len(batch_size), 12))
+    data = np.zeros((len(nb_threads), len(batch_size), 13))
     for i, thread in enumerate(nb_threads):
         for j, size in enumerate(batch_size):
             out = subprocess.run(args=args + ['-t', '{}'.format(thread), '-B', '{}'.format(size)], \
@@ -125,9 +125,9 @@ print('  NbThreads: {:d}'.format(max_nb_threads))
 print('  BatchSize: {:d}'.format(max_batch_size))
 ```
 
-    Max speedup: 33.272%
+    Max speedup: 27.476%
       NbThreads: 4
-      BatchSize: 1000000
+      BatchSize: 10000000
 
 
 
@@ -138,7 +138,7 @@ print('  BatchSize: {:d}'.format(max_batch_size))
 ```python
 # Store computed operating points
 if not op_path.is_file():
-    np.save('./operating_points.npy', data)
+    np.save(str(op_path), data)
 ```
 
 ## Number of threads analysis
@@ -162,7 +162,7 @@ speedup_t.plot.bar(y='Speedup', legend=False, title='Speedup (%) [NbThreads = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f13eede47f0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7fa6240c6160>
 
 
 
@@ -191,7 +191,7 @@ speedup_b.plot.bar(y='Speedup', legend=False, title='Speedup (%) [BatchSize = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f13eeffb048>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7fa6224e0e80>
 
 
 
