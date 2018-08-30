@@ -3,6 +3,7 @@
 #include <omp.h>
 
 #include <boost/program_options.hpp>
+#include <fstream>
 
 #include "soccer_monitoring.hpp"
 
@@ -30,7 +31,8 @@ Arguments parse_arguments(int argc, char *argv[]) {
       "stream,s", po::value<std::string>(), "Game stream file path")(
       "metadata,m", po::value<std::string>(), "Metadata file path")(
       "threads,t", po::value<int>()->default_value(0), "Number of threads")(
-      "batch-size,B", po::value<int>()->default_value(1500), "Events batch size (default: auto)")(
+      "batch-size,B", po::value<int>()->default_value(1500),
+      "Events batch size (default: auto)")(
       "output,o", po::value<std::string>(),
       "Output file path (default: stdout)");
 

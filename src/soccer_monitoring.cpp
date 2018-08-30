@@ -40,18 +40,18 @@ void run_game_monitoring(int time_units, double maximum_distance,
 
   visualizer.draw();
   auto t1 = std::chrono::steady_clock::now();
-  for (auto const &[batch, is_period_last_batch] : fetcher) {
+  for (auto const &batch : fetcher) {
     // Check if batch returned because time_units seconds are elapsed
-    stats.accumulate_stats(batch, is_period_last_batch);
+    stats.accumulate_stats(batch);
 
-    if (is_period_last_batch) {
+    if (batch.is_period_last_batch) {
       auto const &partials = stats.last_partial();
 
       auto t2 = std::chrono::steady_clock::now();
       std::chrono::duration<double> diff = t2 - t1;
-      fmt::print(
-          "Processed {} seconds of the stream (~ {} events) in {:.3f} seconds\n",
-          time_units, time_units * 1500, diff.count());
+      fmt::print("Processed {} seconds of the stream (~ {} events) in {:.3f} "
+                 "seconds\n",
+                 time_units, time_units * 1500, diff.count());
       t1 = t2;
       visualizer.update_stats(partials);
       visualizer.draw();
@@ -94,11 +94,11 @@ void run_game_monitoring(int time_units, double maximum_distance,
                                     time_units, batch_size, context};
   auto stats = game::GameStatistics{maximum_distance, context};
 
-  for (auto const &[batch, is_period_last_batch] : fetcher) {
+  for (auto const &batch : fetcher) {
     // Check if batch returned because time_units seconds are elapsed
-    stats.accumulate_stats(batch, is_period_last_batch);
+    stats.accumulate_stats(batch);
 
-    if (is_period_last_batch) {
+    if (batch.is_period_last_batch) {
       auto const &partials = stats.last_partial();
       visualizer.update_stats(partials);
       visualizer.draw();

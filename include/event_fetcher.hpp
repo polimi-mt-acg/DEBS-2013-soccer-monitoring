@@ -1,8 +1,7 @@
-#include <utility>
-
 #ifndef GAME_EVENT_FETCHER_H
 #define GAME_EVENT_FETCHER_H
 
+#include "batch.hpp"
 #include "context.hpp"
 #include "details/event_fetcher_impl.hpp"
 #include "event.hpp"
@@ -15,6 +14,8 @@
 #include <regex>
 #include <sstream>
 #include <string_view>
+#include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -59,8 +60,7 @@ public:
    *
    * @return the batch of PositionEvent.
    */
-  std::pair<std::reference_wrapper<const std::vector<PositionEvent>>, bool>
-  parse_batch();
+  Batch parse_batch();
   /**
    * Tests whether an event is valid to be added to a batch, i.e. its timestamp
    * is within the first half or the second half of the game.
@@ -68,7 +68,15 @@ public:
    * @param event the PositionEvent to test
    * @return true if valid, false otherwise
    */
-  bool is_valid_event(PositionEvent const &event) const;
+  bool is_in_game(PositionEvent const &event) const;
+  /**
+   * Test whether an event happened during the game break that is between the
+   * first half end and the seconds half beginning
+   *
+   * @param event the PositionEvent to test
+   * @return true if within the break time, false otherwise
+   */
+  bool is_break(PositionEvent const &event) const;
   /**
    * @return an iterator to the first batch of PositionEvents
    */
@@ -82,7 +90,10 @@ private:
   Context &context;
   std::unique_ptr<std::istream> is = {};
   bool game_paused = false;
+  bool game_over = false;
   std::vector<PositionEvent> batch = {};
+  std::vector<PositionEvent> to_ship = {};
+  Snapshot snapshot;
   int time_units = 0;
   std::chrono::picoseconds period_start;
   std::size_t batch_size = 0;
@@ -202,9 +213,8 @@ private:
   std::string line;
 };
 
-
 struct parser_regex {};
-struct parser_custom{};
+struct parser_custom {};
 
 /**
  * @brief Parse a single event line into an event.

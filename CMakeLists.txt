@@ -26,16 +26,17 @@ add_subdirectory(external/fmt EXCLUDE_FROM_ALL)
 find_package(Boost REQUIRED COMPONENTS program_options)
 
 set(SOCCER_MONITORING_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/soccer_monitoring.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/context.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/event_fetcher.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/metadata.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/position.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/soccer_monitoring.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/visualizer.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/game_statistics.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/event_fetcher_impl.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/details/game_statistics_impl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/visualizer_impl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/event_fetcher_impl.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/details/visualizer_impl.cpp )
 
 add_executable(soccer-monitoring
         ${SOCCER_MONITORING_SRC}
@@ -57,6 +58,7 @@ target_link_libraries(soccer-monitoring
             fmt-header-only
             stdc++fs
             Boost::program_options
+            dl
         )
 
 # Profiling option

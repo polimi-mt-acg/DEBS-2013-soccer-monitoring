@@ -88,8 +88,8 @@ TEST_CASE("Test accumulate_stats computation") {
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 
-    for (auto const &[batch, is_period_last_batch] : fetcher) {
-      stats.accumulate_stats(batch, false);
+    for (auto const &batch : fetcher) {
+      stats.accumulate_stats(batch);
       print_partial_stats(stats, context);
       fmt::print("\n");
     }

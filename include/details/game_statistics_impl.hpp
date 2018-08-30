@@ -47,10 +47,10 @@ class BallPossession {
   friend class details::ball_possession_iterator<true>;
   friend class details::ball_possession_iterator<false>;
 
+public:
   using const_iterator = details::ball_possession_iterator<true>;
   using iterator = details::ball_possession_iterator<false>;
 
-public:
   static constexpr auto infinite_distance = std::numeric_limits<double>::max();
   static const std::string none_player;
 
