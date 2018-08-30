@@ -58,6 +58,7 @@ target_link_libraries(soccer-monitoring
             fmt-header-only
             stdc++fs
             Boost::program_options
+            dl
         )
 
 # Profiling option

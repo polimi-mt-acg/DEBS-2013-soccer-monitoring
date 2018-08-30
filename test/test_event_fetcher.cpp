@@ -6,9 +6,11 @@
 #include "stream_types.hpp"
 #include "test_dataset.hpp"
 
+#include <game_statistics.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <visualizer.hpp>
 
 TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
   using namespace std::literals;
@@ -118,10 +120,11 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
         game::EventFetcher{game_data_start_10_50, game::string_stream{},
                            time_units, batch_size, context};
 
-    const auto &first_batch = fetcher.parse_batch().data.get();
+    auto events_before_first_pause = 5;
+    const auto &first_batch = *fetcher.parse_batch().data;
 
-    // Batch has BATCH_SIZE size
-    REQUIRE(first_batch.size() == batch_size);
+    // Batch has size equal to number of events before first game interruption
+    REQUIRE(first_batch.size() == events_before_first_pause);
 
     // Game events before game start are dropped
     REQUIRE(first_batch[0].get_timestamp() >= game::game_start);
@@ -141,3 +144,94 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
     }
   }
 }
+
+// TEST_CASE("Fetchers with different time units make the same batches") {
+//  std::size_t batch_size = 1500;
+//  auto maximum_distance = 5.0;
+//
+//  //= --------------------- Setup game::Context -----------------------------
+//  =
+//  /// 1
+//  auto meta_1 = game::parse_metadata_string(metadata);
+//  auto &players_1 = meta_1.players;
+//  auto &teams_1 = meta_1.teams;
+//  auto &balls_1 = meta_1.balls;
+//
+//  auto context_1 = game::Context{};
+//  context_1.set_player_map(players_1);
+//  context_1.set_team_map(teams_1);
+//  context_1.set_ball_map(balls_1);
+//
+//  for (auto &position : meta_1.positions) {
+//    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); },
+//    position); context_1.add_position(position, sids);
+//  }
+//
+//  /// 2
+//  auto meta_2 = game::parse_metadata_string(metadata);
+//  auto &players_2 = meta_2.players;
+//  auto &teams_2 = meta_2.teams;
+//  auto &balls_2 = meta_2.balls;
+//
+//  auto context_2 = game::Context{};
+//  context_2.set_player_map(players_2);
+//  context_2.set_team_map(teams_2);
+//  context_2.set_ball_map(balls_2);
+//
+//  for (auto &position : meta_2.positions) {
+//    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); },
+//    position); context_2.add_position(position, sids);
+//  }
+//
+//  //= ----------------------- Testing logic -------------------------------- =
+//  auto fetcher_1 = game::EventFetcher{
+//      GAME_DATA_START_10_1e7, game::file_stream{}, 1, batch_size, context_1};
+//  auto stats_1 = game::GameStatistics{maximum_distance, context_1};
+//
+//  auto fetcher_2 = game::EventFetcher{
+//      GAME_DATA_START_10_1e7, game::file_stream{}, 2, batch_size, context_2};
+//  auto stats_2 = game::GameStatistics{maximum_distance, context_2};
+//
+//  auto players = players_1.get_player_names();
+//  auto data_1 = std::vector<game::PositionEvent>{};
+//  auto data_2 = std::vector<game::PositionEvent>{};
+//  auto seconds = 0;
+//  auto checkpoints_1 = std::vector<decltype(data_1)>{};
+//  auto checkpoints_2 = std::vector<decltype(data_1)>{};
+//  while (seconds < 6) {
+//    auto batch_1 = fetcher_1.parse_batch();
+//    auto batch_2 = fetcher_2.parse_batch();
+//
+//    std::copy(batch_1.data->begin(), batch_1.data->end(),
+//              std::back_inserter(data_1));
+//    std::copy(batch_2.data->begin(), batch_2.data->end(),
+//              std::back_inserter(data_2));
+//
+//    if (batch_1.is_period_last_batch) {
+//      checkpoints_1.push_back(data_1);
+//      data_1.clear();
+//    }
+//
+//    if (batch_2.is_period_last_batch) {
+//      checkpoints_2.push_back(data_2);
+//      data_2.clear();
+//    }
+//
+//    if (batch_1.is_period_last_batch) {
+//      ++seconds;
+//    }
+//  }
+//
+//  REQUIRE(checkpoints_1.size() == 2 * checkpoints_2.size());
+//  for (std::size_t i = 0; i < checkpoints_1.size(); i += 2) {
+//    REQUIRE(checkpoints_1[i].size() + checkpoints_1[i + 1].size() ==
+//            checkpoints_2[i / 2].size());
+//    auto merge = std::vector<game::PositionEvent>{checkpoints_1[i]};
+//    std::copy(checkpoints_1[i + 1].begin(), checkpoints_1[i + 1].end(),
+//              std::back_inserter(merge));
+//    for (std::size_t j = 0; j < merge.size(); ++j) {
+//      REQUIRE(merge[j].get_timestamp() ==
+//              checkpoints_2[i / 2][j].get_timestamp());
+//    }
+//  }
+//}

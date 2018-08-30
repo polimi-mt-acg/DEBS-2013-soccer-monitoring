@@ -23,7 +23,14 @@ public:
 
   using iterator = event_fetcher_iterator;
 
-  event_fetcher_iterator(EventFetcher &f, bool set_end = false);
+  static iterator end() {
+    auto it = event_fetcher_iterator();
+    it.is_end = true;
+    return it;
+  }
+
+  event_fetcher_iterator();
+  explicit event_fetcher_iterator(EventFetcher &f);
 
   // CopyConstructible
   event_fetcher_iterator(iterator const &other)
@@ -54,6 +61,9 @@ private:
   Batch value;
   bool is_end;
 };
+
+void update_sensor_position(Positions &position,
+                            PositionEvent const &position_event);
 } // namespace details
 } // namespace game
 

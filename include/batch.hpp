@@ -18,6 +18,10 @@ namespace game {
  */
 struct Batch {
   /**
+   * Constructs a new Batch. All the fields are default constructed.
+   */
+  Batch() = default;
+  /**
    * Construct a new Batch.
    * @param data The input batch of PositionEvents
    * @param is_period_last_batch True if the input batch is the last one for the
@@ -26,7 +30,7 @@ struct Batch {
    */
   Batch(std::vector<PositionEvent> const &data, bool is_period_last_batch,
         std::unordered_map<std::string, Positions> const &snapshot)
-      : data{std::cref(data)},
+      : data{std::addressof(data)},
         is_period_last_batch{is_period_last_batch}, snapshot{snapshot} {}
   /**
    * Construct a new Batch.
@@ -37,21 +41,21 @@ struct Batch {
    */
   Batch(std::vector<PositionEvent> const &data, bool is_period_last_batch,
         std::unordered_map<std::string, Positions> &&snapshot)
-      : data{std::cref(data)}, is_period_last_batch{is_period_last_batch},
+      : data{std::addressof(data)}, is_period_last_batch{is_period_last_batch},
         snapshot{std::move(snapshot)} {}
   /**
    * The input batch of PositionEvents
    */
-  std::reference_wrapper<const std::vector<PositionEvent>> data;
+  const std::vector<PositionEvent> *data = nullptr;
   /**
    * True if the input batch is the last one for the current T time units. False
    * otherwise.
    */
-  bool is_period_last_batch;
+  bool is_period_last_batch = false;
   /**
    * The snapshot of the field.
    */
-  Snapshot snapshot;
+  Snapshot snapshot = {};
 };
 } // namespace game
 

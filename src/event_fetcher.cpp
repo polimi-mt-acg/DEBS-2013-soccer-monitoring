@@ -1,6 +1,7 @@
 #include "event_fetcher.hpp"
 
 #include <boost/algorithm/string.hpp>
+#include <event_fetcher.hpp>
 #include <regex>
 #include <string>
 
@@ -89,7 +90,7 @@ EventFetcher::EventFetcher(std::string const &path, game::file_stream,
                            int time_units, std::size_t batch_size,
                            Context &context)
     : time_units{time_units}, batch_size{batch_size}, context{context},
-      period_start{game_start} {
+      snapshot{context.take_snapshot()}, period_start{game_start} {
   // Open a file stream
   is = std::make_unique<std::ifstream>(path, std::ios_base::in);
 
@@ -102,7 +103,7 @@ EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
                            int time_units, std::size_t batch_size,
                            Context &context)
     : time_units{time_units}, batch_size{batch_size}, context{context},
-      period_start{game_start} {
+      snapshot{context.take_snapshot()}, period_start{game_start} {
   // Open a string stream
   is = std::make_unique<std::istringstream>(dataset);
 
@@ -151,33 +152,35 @@ PositionEvent EventFetcher::parse_next_event() {
 }
 
 Batch EventFetcher::parse_batch() {
-  batch.clear(); // Delete previous batch
-  auto snapshot = std::unordered_map<std::string, Positions>{};
   while (true) {
     try {
       auto position_event = parse_next_event();
-      // We need to update its sensor position, otherwise when
-      // the game resumes, the sensors would still be found at the very
-      // old position (which would be wrong)
-      auto &position = context.get_position(position_event.get_sid());
-      std::visit(
-          [&position_event](auto &&pos) {
-            pos.update_sensor(position_event.get_sid(),
-                              position_event.get_vector());
-          },
-          position);
-
       // If an in-game position event
-      if (is_valid_event(position_event)) {
+      if (is_in_game(position_event)) {
         auto event_ts = position_event.get_timestamp();
         auto elapsed_time = event_ts - period_start;
 
-        if (elapsed_time > std::chrono::seconds(time_units)) {
-          period_start = event_ts;
+        if (elapsed_time >= std::chrono::seconds(time_units)) {
+          period_start += std::chrono::seconds(time_units);
+          to_ship = batch;
+          batch.clear();
+          auto ship_snapshot = snapshot;
           if (!game_paused) {
+            snapshot = context.take_snapshot();
             batch.push_back(position_event);
           }
-          return {std::cref(batch), true, std::move(snapshot)};
+          auto &position = context.get_position(position_event.get_sid());
+          details::update_sensor_position(position, position_event);
+          return {std::cref(to_ship), true, std::move(ship_snapshot)};
+        }
+
+        if (game_paused && !batch.empty()) {
+          to_ship = batch;
+          batch.clear();
+          auto ship_snapshot = snapshot;
+          auto &position = context.get_position(position_event.get_sid());
+          details::update_sensor_position(position, position_event);
+          return {std::cref(to_ship), false, std::move(ship_snapshot)};
         }
 
         if (!game_paused) {
@@ -187,27 +190,52 @@ Batch EventFetcher::parse_batch() {
           batch.push_back(position_event);
         }
 
+        auto &position = context.get_position(position_event.get_sid());
+        details::update_sensor_position(position, position_event);
+
         if (batch.size() == batch_size) {
-          return {std::cref(batch), false, std::move(snapshot)};
+          to_ship = batch;
+          batch.clear();
+          return {std::cref(to_ship), false, snapshot};
+        }
+      } else {
+        if (is_break(position_event) && !batch.empty()) {
+          to_ship = batch;
+          batch.clear();
+          auto ship_snapshot = snapshot;
+          auto &position = context.get_position(position_event.get_sid());
+          details::update_sensor_position(position, position_event);
+          return {std::cref(to_ship), true, std::move(ship_snapshot)};
+        } else {
+          // Just update sensor position
+          auto &position = context.get_position(position_event.get_sid());
+          details::update_sensor_position(position, position_event);
         }
       }
-      // Otherwise, update positions to have them updated before game start
     } catch (std::ios_base::failure &ex) {
-      return {std::cref(batch), true, std::move(snapshot)};
+      game_over = true;
+      to_ship = batch;
+      auto ship_snapshot = snapshot;
+      return {std::cref(to_ship), true, std::move(ship_snapshot)};
     }
   }
 }
 
 EventFetcher::iterator EventFetcher::begin() { return iterator{*this}; }
 
-EventFetcher::iterator EventFetcher::end() { return iterator{*this, true}; }
+EventFetcher::iterator EventFetcher::end() { return iterator::end(); }
 
-bool EventFetcher::is_valid_event(PositionEvent const &event) const {
+bool EventFetcher::is_in_game(PositionEvent const &event) const {
   auto first_half = game_start <= event.get_timestamp() &&
                     event.get_timestamp() <= break_start;
   auto second_half =
       break_end <= event.get_timestamp() && event.get_timestamp() <= game_end;
   return first_half || second_half;
+}
+
+bool EventFetcher::is_break(PositionEvent const &event) const {
+  return break_start < event.get_timestamp() &&
+         event.get_timestamp() < break_end;
 }
 
 // ==-----------------------------------------------------------------------==

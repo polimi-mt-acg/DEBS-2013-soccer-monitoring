@@ -14,14 +14,14 @@ using namespace std::literals;
 
 void GameStatistics::accumulate_stats(const game::Batch &batch) {
   auto ball_possession = details::BallPossession{};
-  auto ball_position = batch.snapshot.at("Ball");
 
   // For each player, scan the batch only for events of sensors worn by that
   // player
-#pragma omp parallel for shared(context) firstprivate(ball_position)
+#pragma omp parallel for shared(context, ball_possession)
   for (std::size_t i = 0; i < player_names.size(); ++i) {
     auto const &name = player_names[i];
     auto const &sids = context.get_player_sids(name);
+    auto ball_position = batch.snapshot.at("Ball");
     auto position = batch.snapshot.at(name);
 
     auto mine = [&sids](int sid) {
@@ -33,7 +33,7 @@ void GameStatistics::accumulate_stats(const game::Batch &batch) {
     };
 
     auto distances = details::DistanceResults{name};
-    for (auto const &event : batch.data.get()) {
+    for (auto const &event : *batch.data) {
       auto event_sid = event.get_sid();
 
       // If player sensor, check if mine
@@ -81,7 +81,7 @@ void GameStatistics::accumulate_stats(const game::Batch &batch) {
   // Update partial statistics
   for (auto const &[d, player_name] : ball_possession) {
     if (player_name != details::BallPossession::none_player) {
-      ++accumulator[player_name];
+      accumulator[player_name] += 1;
     }
   }
 
