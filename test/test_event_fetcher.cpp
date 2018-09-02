@@ -66,21 +66,7 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
         "7855,-3696,4961\n"
         "SE,65,10634738740592737,28258,-893,439,53656,885053,5930,450,8038,8042,5909,-626\n"s;
 
-    auto meta = game::parse_metadata_string(metadata);
-    auto &players = meta.players;
-    auto &teams = meta.teams;
-    auto &balls = meta.balls;
-
-    auto context = game::Context{};
-    context.set_player_map(players);
-    context.set_team_map(teams);
-    context.set_ball_map(balls);
-
-    for (auto &position : meta.positions) {
-      auto sids =
-          std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-      context.add_position(position, sids);
-    }
+    auto context = game::Context::build_from(metadata);
 
     int time_units = 90 * 60;
     auto fetcher = game::EventFetcher(position_events, game::string_stream{},
@@ -89,33 +75,20 @@ TEST_CASE("Test Event Fetcher", "[event_fetcher]") {
     // Read all the position events and print them
     for (int i = 0; i < 9; ++i) {
       auto position_event = fetcher.parse_next_event();
-      std::cout << position_event << "\n";
+      std::cout << *position_event << "\n";
     }
 
-    // Another read throws a ios failure (no new line available)
-    REQUIRE_THROWS_AS(fetcher.parse_next_event(), std::ios_base::failure);
+    // Another read returns an empty optional (no new line available)
+    REQUIRE(!fetcher.parse_next_event());
   }
 
   SECTION("Test batch parsing") {
     std::size_t batch_size = 10;
     int time_units = 90 * 60;
 
-    auto meta = game::parse_metadata_string(metadata);
-    auto &players = meta.players;
-    auto &teams = meta.teams;
-    auto &balls = meta.balls;
-
-    auto context = game::Context{};
-    context.set_player_map(players);
-    context.set_team_map(teams);
-    context.set_ball_map(balls);
-
-    for (auto &position : meta.positions) {
-      auto sids =
-          std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-      context.add_position(position, sids);
-    }
-
+    auto context = game::Context::build_from(metadata);
+    auto const &players = context.get_players();
+    auto const &balls = context.get_balls();
     auto fetcher =
         game::EventFetcher{game_data_start_10_50, game::string_stream{},
                            time_units, batch_size, context};

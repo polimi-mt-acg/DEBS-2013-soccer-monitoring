@@ -4,6 +4,7 @@
 #include "metadata.hpp"
 #include "position.hpp"
 
+#include <filesystem>
 #include <functional>
 #include <unordered_map>
 #include <vector>
@@ -26,7 +27,12 @@ using Snapshot = std::unordered_map<std::string, Positions>;
  * sensors d) game::Positions of the players and the ball on the field.
  */
 class Context {
+protected:
+  Context() = default;
+
 public:
+  static Context build_from(std::filesystem::path const &metadata);
+  static Context build_from(std::string const &metadata);
   /**
    * Store a copy of input game::PlayerMap
    * @param players the players map

@@ -34,14 +34,5 @@ operator=(const event_fetcher_iterator::iterator &other) {
 event_fetcher_iterator::event_fetcher_iterator()
     : fetcher{nullptr}, is_end{false}, value{} {}
 
-void update_sensor_position(Positions &position,
-                            PositionEvent const &position_event) {
-  std::visit(
-      [&position_event](auto &&pos) {
-        pos.update_sensor(position_event.get_sid(),
-                          position_event.get_vector());
-      },
-      position);
-}
 } // namespace details
 } // namespace game

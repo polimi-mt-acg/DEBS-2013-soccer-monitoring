@@ -2,10 +2,12 @@
 
 #include <boost/algorithm/string.hpp>
 #include <event_fetcher.hpp>
+#include <optional>
 #include <regex>
 #include <string>
 
 #include "event.hpp"
+
 
 namespace game {
 // ==-----------------------------------------------------------------------==
@@ -111,7 +113,7 @@ EventFetcher::EventFetcher(std::string const &dataset, game::string_stream,
   batch.reserve(batch_size);
 }
 
-PositionEvent EventFetcher::parse_next_event() {
+std::optional<PositionEvent> EventFetcher::parse_next_event() {
   while (true) {
     if (*is) {
       // Get an event line
@@ -143,80 +145,46 @@ PositionEvent EventFetcher::parse_next_event() {
         }
       } else {
         // Cannot read a new line.
-        throw std::ios_base::failure{"No new line available. Reached EOF."};
+        return {};
       }
     } else {
-      throw std::ios_base::failure{"No new line available. Reached EOF."};
+      return {};
     }
   }
 }
 
 Batch EventFetcher::parse_batch() {
+  batch.clear();
   while (true) {
-    try {
-      auto position_event = parse_next_event();
+    if (auto position_event = parse_next_event()) {
       // If an in-game position event
-      if (is_in_game(position_event)) {
-        auto event_ts = position_event.get_timestamp();
-        auto elapsed_time = event_ts - period_start;
-
-        if (elapsed_time >= std::chrono::seconds(time_units)) {
-          period_start += std::chrono::seconds(time_units);
-          to_ship = batch;
-          batch.clear();
-          auto ship_snapshot = snapshot;
-          if (!game_paused) {
-            snapshot = context.take_snapshot();
-            batch.push_back(position_event);
-          }
-          auto &position = context.get_position(position_event.get_sid());
-          details::update_sensor_position(position, position_event);
-          return {std::cref(to_ship), true, std::move(ship_snapshot)};
+      if (is_in_game(*position_event)) {
+        if (is_period_over(*position_event)) {
+          return batch_period_over(*position_event);
         }
 
         if (game_paused && !batch.empty()) {
-          to_ship = batch;
-          batch.clear();
-          auto ship_snapshot = snapshot;
-          auto &position = context.get_position(position_event.get_sid());
-          details::update_sensor_position(position, position_event);
-          return {std::cref(to_ship), false, std::move(ship_snapshot)};
+          return batch_game_paused(*position_event);
         }
 
         if (!game_paused) {
-          if (batch.empty()) {
-            snapshot = context.take_snapshot();
-          }
-          batch.push_back(position_event);
+          add_event_to_batch(*position_event);
         }
 
-        auto &position = context.get_position(position_event.get_sid());
-        details::update_sensor_position(position, position_event);
-
-        if (batch.size() == batch_size) {
-          to_ship = batch;
-          batch.clear();
-          return {std::cref(to_ship), false, snapshot};
+        if (batch.size() >= batch_size) {
+          // Batch full
+          return {batch, false, snapshot};
         }
       } else {
-        if (is_break(position_event) && !batch.empty()) {
-          to_ship = batch;
-          batch.clear();
-          auto ship_snapshot = snapshot;
-          auto &position = context.get_position(position_event.get_sid());
-          details::update_sensor_position(position, position_event);
-          return {std::cref(to_ship), true, std::move(ship_snapshot)};
+        if (is_break(*position_event) && !batch.empty()) {
+          return batch_game_break(*position_event);
         } else {
           // Just update sensor position
-          auto &position = context.get_position(position_event.get_sid());
-          details::update_sensor_position(position, position_event);
+          update_sensor_position(*position_event);
         }
       }
-    } catch (std::ios_base::failure &ex) {
-      game_over = true;
-      to_ship = batch;
-      auto ship_snapshot = snapshot;
-      return {std::cref(to_ship), true, std::move(ship_snapshot)};
+    } else {
+      return batch_game_over();
     }
   }
 }
@@ -236,6 +204,64 @@ bool EventFetcher::is_in_game(PositionEvent const &event) const {
 bool EventFetcher::is_break(PositionEvent const &event) const {
   return break_start < event.get_timestamp() &&
          event.get_timestamp() < break_end;
+}
+
+bool EventFetcher::is_period_over(PositionEvent const &event) {
+  auto event_ts = event.get_timestamp();
+  auto elapsed_time = event_ts - period_start;
+  return elapsed_time >= std::chrono::seconds(time_units);
+}
+
+Batch EventFetcher::batch_period_over(PositionEvent const &event) {
+  period_start += std::chrono::seconds(time_units);
+  auto prev_snapshot = snapshot;
+  if (!game_paused) {
+    snapshot = context.take_snapshot();
+    bucket.push_back(event);
+  }
+  update_sensor_position(event);
+  return {batch, true, std::move(prev_snapshot)};
+}
+
+Batch EventFetcher::batch_game_paused(PositionEvent const &event) {
+  auto prev_snapshot = snapshot;
+  update_sensor_position(event);
+  return {batch, false, std::move(prev_snapshot)};
+}
+
+Batch EventFetcher::batch_game_break(PositionEvent const &event) {
+  auto prev_snapshot = snapshot;
+  auto &position = context.get_position(event.get_sid());
+  ::game::update_sensor_position(position, event);
+  return {batch, true, std::move(prev_snapshot)};
+}
+
+Batch EventFetcher::batch_game_over() {
+  game_over = true;
+  auto prev_snapshot = snapshot;
+  return {batch, true, std::move(prev_snapshot)};
+}
+
+void EventFetcher::add_event_to_batch(PositionEvent const &event) {
+  if (batch.empty()) {
+    if (bucket.empty()) {
+      // No data left to add to batch. Just take a snapshot.
+      snapshot = context.take_snapshot();
+    } else {
+      // There are events left to add. Snapshot have already been taken.
+      // Just move data to batch.
+      std::move(bucket.begin(), bucket.end(), std::back_inserter(batch));
+      bucket.clear();
+    }
+  }
+  // In any case, add the new event to batch.
+  batch.push_back(event);
+  update_sensor_position(event);
+}
+
+void EventFetcher::update_sensor_position(PositionEvent const &event) {
+  auto &position = context.get_position(event.get_sid());
+  ::game::update_sensor_position(position, event);
 }
 
 // ==-----------------------------------------------------------------------==

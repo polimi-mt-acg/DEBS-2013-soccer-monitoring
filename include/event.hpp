@@ -61,6 +61,7 @@ private:
  */
 class PositionEvent {
 public:
+  PositionEvent() = default;
   PositionEvent(int sensor_id, std::chrono::picoseconds timestamp, int x, int y,
                 int z)
       : sid{sensor_id}, timestamp{timestamp}, x{x}, y{y}, z{z} {}

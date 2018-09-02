@@ -78,4 +78,14 @@ std::tuple<double, double, double> BallPosition::vector() const {
     return {inf, inf, inf};
   }
 }
+
+void update_sensor_position(game::Positions &position,
+                            game::PositionEvent const &position_event) {
+  std::visit(
+      [&position_event](auto &&pos) {
+        pos.update_sensor(position_event.get_sid(),
+                          position_event.get_vector());
+      },
+      position);
+}
 } // namespace game

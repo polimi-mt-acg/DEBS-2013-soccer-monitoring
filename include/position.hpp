@@ -7,6 +7,8 @@
 #include <variant>
 #include <vector>
 
+#include "event.hpp"
+
 namespace game {
 /**
  * The position of an entity on the field. Each entity has some sensors at some
@@ -140,6 +142,9 @@ private:
  * static-polymorphism.
  */
 using Positions = std::variant<BallPosition, PlayerPosition>;
+
+void update_sensor_position(game::Positions &position,
+                            PositionEvent const &position_event);
 
 /**
  * Computes the arithmetic average of values in the range [@p first, @p end).

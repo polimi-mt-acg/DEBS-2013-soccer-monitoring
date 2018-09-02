@@ -84,6 +84,11 @@ private:
   std::vector<std::unordered_map<std::string, double>> partials = {};
   std::unordered_map<std::string, int> accumulator = {};
   std::unordered_map<std::string, int> game_accumulator = {};
+
+  double as_meters(double mm) const { return mm / 1000; }
+  void
+  accumulate_partial_statistics(details::BallPossession const &ball_possession);
+  void compute_partial_statistics();
 };
 } // namespace game
 #endif // SOCCER_MONITORING_GAME_STATISTICS_H
