@@ -50,7 +50,7 @@ public:
    * @throws std::ios_base::failure if stream reached EOF
    * @return next in-game PositionEvent
    */
-  PositionEvent parse_next_event();
+  std::optional<PositionEvent> parse_next_event();
   /**
    * @brief Parses next in-game batch of PositionEvent.
    * If batch_size PositionEvent are parsed, it returns a batch of batch_size
@@ -92,11 +92,19 @@ private:
   bool game_paused = false;
   bool game_over = false;
   std::vector<PositionEvent> batch = {};
-  std::vector<PositionEvent> to_ship = {};
+  std::vector<PositionEvent> bucket = {};
   Snapshot snapshot;
   int time_units = 0;
   std::chrono::picoseconds period_start;
   std::size_t batch_size = 0;
+
+  bool is_period_over(PositionEvent const &event);
+  Batch batch_period_over(PositionEvent const &event);
+  Batch batch_game_paused(PositionEvent const &event);
+  Batch batch_game_break(PositionEvent const &event);
+  Batch batch_game_over();
+  void add_event_to_batch(PositionEvent const &event);
+  void update_sensor_position(PositionEvent const &event);
 };
 
 // ==-----------------------------------------------------------------------==

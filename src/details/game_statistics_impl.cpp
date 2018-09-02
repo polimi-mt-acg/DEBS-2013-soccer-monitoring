@@ -1,4 +1,5 @@
 #include "details/game_statistics_impl.hpp"
+#include <boost/concept_check.hpp>
 
 namespace game {
 namespace details {
@@ -30,11 +31,17 @@ void BallPossession::reduce(DistanceResults const &distance) {
 }
 
 BallPossession::iterator BallPossession::begin() { return iterator{*this}; }
+BallPossession::const_iterator BallPossession::begin() const {
+  return const_iterator{*this};
+}
 BallPossession::const_iterator BallPossession::cbegin() const {
   return const_iterator{*this};
 }
 BallPossession::iterator BallPossession::end() {
   return iterator{*this, min_distances.size()};
+}
+BallPossession::const_iterator BallPossession::end() const {
+  return const_iterator{*this, min_distances.size()};
 }
 BallPossession::const_iterator BallPossession::cend() const {
   return const_iterator{*this, min_distances.size()};

@@ -40,22 +40,14 @@ void GameStatistics::accumulate_stats(const game::Batch &batch) {
       if (context.get_players().is_player(event_sid)) {
         // If mine, update my position
         if (mine(event_sid)) {
-          std::visit(
-              [&event, event_sid](auto &&pos) {
-                pos.update_sensor(event_sid, event.get_vector());
-              },
-              position);
+          update_sensor_position(position, event);
         }
       }
 
       // If ball sensor:
       if (context.get_balls().is_ball(event_sid)) {
         // Update local ball position
-        std::visit(
-            [&event, event_sid](auto &&pos) {
-              pos.update_sensor(event_sid, event.get_vector());
-            },
-            ball_position);
+        update_sensor_position(ball_position, event);
 
         // Compute ball possession
         auto distance =
@@ -63,8 +55,7 @@ void GameStatistics::accumulate_stats(const game::Batch &batch) {
 
         // If distance is within maximum distance, add it. Otherwise set
         // distance to infinity
-        // TODO: Make conversion more visible
-        if (distance / 1000 <= maximum_distance) {
+        if (as_meters(distance) <= maximum_distance) {
           distances.push_back(distance);
         } else {
           distances.push_back(infinite_distance);
@@ -79,19 +70,11 @@ void GameStatistics::accumulate_stats(const game::Batch &batch) {
   }
 
   // Update partial statistics
-  for (auto const &[d, player_name] : ball_possession) {
-    if (player_name != details::BallPossession::none_player) {
-      accumulator[player_name] += 1;
-    }
-  }
+  accumulate_partial_statistics(ball_possession);
 
   // If last batch for this period, output partial statistics
   if (batch.is_period_last_batch) {
-    partials.push_back(accumulated_stats());
-    for (auto const &[player_name, hits] : accumulator) {
-      game_accumulator[player_name] += hits;
-    }
-    accumulator.clear();
+    compute_partial_statistics();
   }
 }
 
@@ -126,5 +109,22 @@ std::unordered_map<std::string, double> GameStatistics::game_stats() const {
   }
 
   return stats;
+}
+
+void GameStatistics::accumulate_partial_statistics(
+    const game::details::BallPossession &ball_possession) {
+  for (auto const &[d, player_name] : ball_possession) {
+    if (player_name != details::BallPossession::none_player) {
+      accumulator[player_name] += 1;
+    }
+  }
+}
+
+void GameStatistics::compute_partial_statistics() {
+  partials.push_back(accumulated_stats());
+  for (auto const &[player_name, hits] : accumulator) {
+    game_accumulator[player_name] += hits;
+  }
+  accumulator.clear();
 }
 } // namespace game

@@ -1,6 +1,45 @@
+
+#include <context.hpp>
+
 #include "context.hpp"
 
 namespace game {
+
+Context Context::build_from(std::filesystem::path const &metadata) {
+  auto meta = game::parse_metadata_file(metadata.string());
+  auto &players = meta.players;
+  auto &teams = meta.teams;
+  auto &balls = meta.balls;
+
+  auto context = game::Context{};
+  context.set_player_map(players);
+  context.set_team_map(teams);
+  context.set_ball_map(balls);
+
+  for (auto &position : meta.positions) {
+    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
+    context.add_position(position, sids);
+  }
+  return context;
+}
+
+Context Context::build_from(std::string const &metadata) {
+  auto meta = game::parse_metadata_string(metadata);
+  auto &players = meta.players;
+  auto &teams = meta.teams;
+  auto &balls = meta.balls;
+
+  auto context = game::Context{};
+  context.set_player_map(players);
+  context.set_team_map(teams);
+  context.set_ball_map(balls);
+
+  for (auto &position : meta.positions) {
+    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
+    context.add_position(position, sids);
+  }
+  return context;
+}
 
 Snapshot Context::take_snapshot() const {
   auto snapshot = std::unordered_map<std::string, Positions>{};

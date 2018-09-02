@@ -63,20 +63,7 @@ TEST_CASE("Test ball possession iterator") {
 }
 
 TEST_CASE("Test accumulate_stats computation") {
-  auto meta = game::parse_metadata_string(metadata);
-  auto &players = meta.players;
-  auto &teams = meta.teams;
-  auto &balls = meta.balls;
-
-  auto context = game::Context{};
-  context.set_player_map(players);
-  context.set_team_map(teams);
-  context.set_ball_map(balls);
-
-  for (auto &position : meta.positions) {
-    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-    context.add_position(position, sids);
-  }
+  auto context = game::Context::build_from(metadata);
 
   SECTION("10_50 String Stream") {
     std::size_t batch_size = 10;

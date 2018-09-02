@@ -62,8 +62,6 @@ private:
   bool is_end;
 };
 
-void update_sensor_position(Positions &position,
-                            PositionEvent const &position_event);
 } // namespace details
 } // namespace game
 

@@ -7,20 +7,7 @@
 #include "visualizer.hpp"
 
 TEST_CASE("Test Visualizer") {
-  auto meta = game::parse_metadata_string(metadata);
-  auto &players = meta.players;
-  auto &teams = meta.teams;
-  auto &balls = meta.balls;
-
-  auto context = game::Context{};
-  context.set_player_map(players);
-  context.set_team_map(teams);
-  context.set_ball_map(balls);
-
-  for (auto &position : meta.positions) {
-    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-    context.add_position(position, sids);
-  }
+  auto context = game::Context::build_from(metadata);
 
   SECTION("10_50 String Stream") {
     std::size_t batch_size = 10;
@@ -32,7 +19,8 @@ TEST_CASE("Test Visualizer") {
     auto stats =
         game::GameStatistics{game::GameStatistics::infinite_distance, context};
 
-    auto visualizer = game::Visualizer{players, teams, time_units};
+    auto visualizer = game::Visualizer{context.get_players(),
+                                       context.get_teams(), time_units};
     visualizer.draw();
 
     for (auto const &batch : fetcher) {

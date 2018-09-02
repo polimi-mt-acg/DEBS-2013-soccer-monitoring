@@ -13,27 +13,12 @@ void run_game_monitoring(int time_units, double maximum_distance,
                          std::filesystem::path const &game_data,
                          std::filesystem::path const &metadata, int nb_threads,
                          std::size_t batch_size) {
-  //= -------------------------- Setup OpenMP ------------------------------- =
   omp_set_num_threads(nb_threads);
-
-  //= --------------------- Setup game::Context ----------------------------- =
-  auto meta = game::parse_metadata_file(metadata.string());
-  auto &players = meta.players;
-  auto &teams = meta.teams;
-  auto &balls = meta.balls;
-
-  auto context = game::Context{};
-  context.set_player_map(players);
-  context.set_team_map(teams);
-  context.set_ball_map(balls);
-
-  for (auto &position : meta.positions) {
-    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-    context.add_position(position, sids);
-  }
+  auto context = game::Context::build_from(metadata);
 
   //= ----------------------- Business logic -------------------------------- =
-  auto visualizer = game::Visualizer{players, teams, time_units};
+  auto visualizer =
+      game::Visualizer{context.get_players(), context.get_teams(), time_units};
   auto fetcher = game::EventFetcher{game_data.string(), game::file_stream{},
                                     time_units, batch_size, context};
   auto stats = game::GameStatistics{maximum_distance, context};
@@ -69,27 +54,12 @@ void run_game_monitoring(int time_units, double maximum_distance,
                          std::filesystem::path const &metadata, int nb_threads,
                          std::size_t batch_size,
                          std::string const &output_path) {
-  //= -------------------------- Setup OpenMP ------------------------------- =
   omp_set_num_threads(nb_threads);
-
-  //= --------------------- Setup game::Context ----------------------------- =
-  auto meta = game::parse_metadata_file(metadata.string());
-  auto &players = meta.players;
-  auto &teams = meta.teams;
-  auto &balls = meta.balls;
-
-  auto context = game::Context{};
-  context.set_player_map(players);
-  context.set_team_map(teams);
-  context.set_ball_map(balls);
-
-  for (auto &position : meta.positions) {
-    auto sids = std::visit([](auto &&pos) { return pos.get_sids(); }, position);
-    context.add_position(position, sids);
-  }
+  auto context = game::Context::build_from(metadata);
 
   //= ----------------------- Business logic -------------------------------- =
-  auto visualizer = game::Visualizer{players, teams, time_units, output_path};
+  auto visualizer = game::Visualizer{context.get_players(), context.get_teams(),
+                                     time_units, output_path};
   auto fetcher = game::EventFetcher{game_data.string(), game::file_stream{},
                                     time_units, batch_size, context};
   auto stats = game::GameStatistics{maximum_distance, context};
