@@ -24,7 +24,8 @@ Visualizer::Visualizer(PlayerMap const &players, TeamMap const &teams,
 }
 
 void Visualizer::update_stats(
-    std::unordered_map<std::string, double> const &partial, bool is_game_end) {
+    std::unordered_map<std::string, double> const &partial, bool is_game_end,
+    std::chrono::picoseconds last_ts) {
   team_a_partial = 0.0;
   team_b_partial = 0.0;
 
@@ -52,8 +53,15 @@ void Visualizer::update_stats(
   }
 
   if (!is_game_end) {
+    namespace chrono = std::chrono;
     // Increment game time
-    game_time += std::chrono::seconds(time_units);
+    if (last_ts >= game_start) {
+      // Add epsilon to round the numbers off
+      last_ts += chrono::milliseconds(1);
+      game_time = chrono::duration_cast<chrono::seconds>(last_ts - game_start);
+    } else {
+      game_time = game_time + chrono::seconds(time_units);
+    }
   }
 }
 
@@ -77,6 +85,20 @@ void Visualizer::draw() {
   }
   draw_separator();
   *os << std::endl;
+}
+
+void Visualizer::draw_final_stats(
+    std::unordered_map<std::string, double> const &game_stats) {
+  update_stats(game_stats, true, {});
+  *os << "--------- Game End. Final Statistics ----------\n\n";
+  draw();
+}
+
+void Visualizer::draw_stats(
+    std::unordered_map<std::string, double> const &partial, bool is_game_end,
+    std::chrono::picoseconds last_ts) {
+  update_stats(partial, is_game_end, last_ts);
+  draw();
 }
 
 void Visualizer::draw_separator() {

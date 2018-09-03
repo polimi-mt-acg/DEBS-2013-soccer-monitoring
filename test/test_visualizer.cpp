@@ -26,7 +26,7 @@ TEST_CASE("Test Visualizer") {
     for (auto const &batch : fetcher) {
       stats.accumulate_stats(batch);
       auto partials = stats.accumulated_stats();
-      visualizer.update_stats(partials);
+      visualizer.update_stats(partials, false, batch.final_ts);
       visualizer.draw();
     }
   }
