@@ -21,8 +21,12 @@ public:
   virtual ~Visualizer();
 
   void draw();
+  void draw_stats(std::unordered_map<std::string, double> const &partial,
+                  bool is_game_end, std::chrono::picoseconds last_ts);
+  void
+  draw_final_stats(std::unordered_map<std::string, double> const &game_stats);
   void update_stats(std::unordered_map<std::string, double> const &partial,
-                    bool is_game_end = false);
+                    bool is_game_end, std::chrono::picoseconds last_ts);
 
 private:
   std::ostream *os;

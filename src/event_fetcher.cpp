@@ -8,7 +8,6 @@
 
 #include "event.hpp"
 
-
 namespace game {
 // ==-----------------------------------------------------------------------==
 //              Event lines parsers - Regex-based and Custom
@@ -159,6 +158,7 @@ Batch EventFetcher::parse_batch() {
     if (auto position_event = parse_next_event()) {
       // If an in-game position event
       if (is_in_game(*position_event)) {
+        last_in_game_ts = position_event->get_timestamp();
         if (is_period_over(*position_event)) {
           return batch_period_over(*position_event);
         }
@@ -173,7 +173,7 @@ Batch EventFetcher::parse_batch() {
 
         if (batch.size() >= batch_size) {
           // Batch full
-          return {batch, false, snapshot};
+          return batch_full_size();
         }
       } else {
         if (is_break(*position_event) && !batch.empty()) {
@@ -220,26 +220,48 @@ Batch EventFetcher::batch_period_over(PositionEvent const &event) {
     bucket.push_back(event);
   }
   update_sensor_position(event);
-  return {batch, true, std::move(prev_snapshot)};
+  auto initial_ts =
+      batch.empty() ? event.get_timestamp() : batch.front().get_timestamp();
+  auto final_ts =
+      batch.empty() ? event.get_timestamp() : batch.back().get_timestamp();
+  return {batch, true, std::move(prev_snapshot), initial_ts, final_ts};
 }
 
 Batch EventFetcher::batch_game_paused(PositionEvent const &event) {
   auto prev_snapshot = snapshot;
   update_sensor_position(event);
-  return {batch, false, std::move(prev_snapshot)};
+  auto initial_ts =
+      batch.empty() ? event.get_timestamp() : batch.front().get_timestamp();
+  auto final_ts =
+      batch.empty() ? event.get_timestamp() : batch.back().get_timestamp();
+  return {batch, false, std::move(prev_snapshot), initial_ts, final_ts};
 }
 
 Batch EventFetcher::batch_game_break(PositionEvent const &event) {
   auto prev_snapshot = snapshot;
   auto &position = context.get_position(event.get_sid());
   ::game::update_sensor_position(position, event);
-  return {batch, true, std::move(prev_snapshot)};
+  auto initial_ts =
+      batch.empty() ? event.get_timestamp() : batch.front().get_timestamp();
+  auto final_ts =
+      batch.empty() ? event.get_timestamp() : batch.back().get_timestamp();
+  return {batch, true, std::move(prev_snapshot), initial_ts, final_ts};
 }
 
 Batch EventFetcher::batch_game_over() {
   game_over = true;
   auto prev_snapshot = snapshot;
-  return {batch, true, std::move(prev_snapshot)};
+  auto initial_ts =
+      batch.empty() ? last_in_game_ts : batch.front().get_timestamp();
+  auto final_ts =
+      batch.empty() ? last_in_game_ts : batch.back().get_timestamp();
+  return {batch, true, std::move(prev_snapshot), initial_ts, final_ts};
+}
+
+Batch EventFetcher::batch_full_size() {
+  auto initial_ts = batch.front().get_timestamp();
+  auto final_ts = batch.back().get_timestamp();
+  return {batch, false, snapshot, initial_ts, final_ts};
 }
 
 void EventFetcher::add_event_to_batch(PositionEvent const &event) {

@@ -29,9 +29,10 @@ struct Batch {
    * @param snapshot The snapshot of the field.
    */
   Batch(std::vector<PositionEvent> const &data, bool is_period_last_batch,
-        std::unordered_map<std::string, Positions> const &snapshot)
-      : data{std::addressof(data)},
-        is_period_last_batch{is_period_last_batch}, snapshot{snapshot} {}
+        std::unordered_map<std::string, Positions> const &snapshot,
+        std::chrono::picoseconds initial_ts, std::chrono::picoseconds final_ts)
+      : data{std::addressof(data)}, is_period_last_batch{is_period_last_batch},
+        snapshot{snapshot}, initial_ts{initial_ts}, final_ts{final_ts} {}
   /**
    * Construct a new Batch.
    * @param data The input batch of PositionEvents
@@ -40,9 +41,17 @@ struct Batch {
    * @param snapshot The snapshot of the field.
    */
   Batch(std::vector<PositionEvent> const &data, bool is_period_last_batch,
-        std::unordered_map<std::string, Positions> &&snapshot)
+        std::unordered_map<std::string, Positions> &&snapshot,
+        std::chrono::picoseconds initial_ts, std::chrono::picoseconds final_ts)
       : data{std::addressof(data)}, is_period_last_batch{is_period_last_batch},
-        snapshot{std::move(snapshot)} {}
+        snapshot{std::move(snapshot)}, initial_ts{initial_ts}, final_ts{
+                                                                   final_ts} {}
+  /**
+   * @return the time interval between first and last event in the batch
+   */
+  std::chrono::picoseconds get_interval() const {
+    return final_ts - initial_ts;
+  }
   /**
    * The input batch of PositionEvents
    */
@@ -56,6 +65,8 @@ struct Batch {
    * The snapshot of the field.
    */
   Snapshot snapshot = {};
+  std::chrono::picoseconds initial_ts = {};
+  std::chrono::picoseconds final_ts = {};
 };
 } // namespace game
 

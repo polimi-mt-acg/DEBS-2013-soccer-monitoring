@@ -96,6 +96,7 @@ private:
   Snapshot snapshot;
   int time_units = 0;
   std::chrono::picoseconds period_start;
+  std::chrono::picoseconds last_in_game_ts = game_start;
   std::size_t batch_size = 0;
 
   bool is_period_over(PositionEvent const &event);
@@ -103,6 +104,7 @@ private:
   Batch batch_game_paused(PositionEvent const &event);
   Batch batch_game_break(PositionEvent const &event);
   Batch batch_game_over();
+  Batch batch_full_size();
   void add_event_to_batch(PositionEvent const &event);
   void update_sensor_position(PositionEvent const &event);
 };
