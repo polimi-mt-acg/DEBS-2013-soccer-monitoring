@@ -4,9 +4,9 @@ The project goal is to develop a system to provide analytics over high velocity 
 
 Using a **OpenMP** framework, the goal is to create a software that computes the real-time statistics of ball possession during the game. (i) A player is considered in possession of the ball when a) He is the player closest to the ball b) He is not farther than _K_ meters from the ball. (ii) Ball possession is undefined whenever the game was paused. (iii) The statistics need to be output for every _T_ time units as the game unfolds. (iv) The statistics accumulate every _T_ time units.
 
-Your software needs to take as input: (i) An integer value defining _K_, ranging from 1 to 5. (ii) An integer value defining _T_, ranging from 1 to 60. It need to output a string for every _T_ time units of play, arbitrarily formatted, with the ball possession statistics for _each player_ and for the _whole team_.
+Your software needs to take as input: (i) An integer value defining _K_, ranging from 1 to 5. (ii) An integer value defining _T_, ranging from 1 to 60.
 
-The output may be directed to `stdout` or a file.
+It need to output a string for every _T_ time units of play, arbitrarily formatted, with the ball possession statistics for _each player_ and for the _whole team_. The output may be directed to `stdout` or a file.
 
 ## Performance
 Check [docs](docs) for information about our implementation scalability.
