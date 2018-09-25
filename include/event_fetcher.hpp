@@ -223,9 +223,14 @@ private:
   std::string line;
 };
 
+/**
+ * A class-tag to select parsing through regular expression.
+ */
 struct parser_regex {};
+/**
+ * A class-tag to select parsing through custom parser.
+ */
 struct parser_custom {};
-
 /**
  * @brief Parse a single event line into an event.
  *

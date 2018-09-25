@@ -17,19 +17,33 @@ namespace game {
  * @brief The instant of game start (in picoseconds).
  */
 constexpr auto game_start = std::chrono::picoseconds{10753295594424116};
-
+/**
+ * @brief The instant of first half end (in picoseconds).
+ */
 constexpr auto break_start = std::chrono::picoseconds{12398000000000000};
-
+/**
+ * @brief The instant of second half start (in picoseconds).
+ */
 constexpr auto break_end = std::chrono::picoseconds{13086639146403495};
-
 /**
  * @brief The instant of game end (in picoseconds).
  */
 constexpr auto game_end = std::chrono::picoseconds{14879639146403495};
-
+/**
+ * The field lower x coordinate
+ */
 constexpr auto field_lower_x = 0;
+/**
+ * The field upper x coordinate
+ */
 constexpr auto field_upper_x = 52483;
+/**
+ * The field lower y coordinate
+ */
 constexpr auto field_lower_y = -33960;
+/**
+ * The field upper y coordinate
+ */
 constexpr auto field_upper_y = 33965;
 
 /**

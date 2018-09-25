@@ -142,7 +142,12 @@ private:
  * static-polymorphism.
  */
 using Positions = std::variant<BallPosition, PlayerPosition>;
-
+/**
+ * Updates a Positions with the new coordinates from an event
+ *
+ * @param position The position to update
+ * @param position_event The position event which to update coordinates from
+ */
 void update_sensor_position(game::Positions &position,
                             PositionEvent const &position_event);
 

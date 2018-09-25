@@ -28,10 +28,25 @@ using Snapshot = std::unordered_map<std::string, Positions>;
  */
 class Context {
 protected:
+  /**
+   * Construct a default-constructed Context
+   */
   Context() = default;
 
 public:
+  /**
+   * Factory method to build a Context from a metadata file.
+   *
+   * @param metadata the file path
+   * @return the Context
+   */
   static Context build_from(std::filesystem::path const &metadata);
+  /**
+   * Factory method to build a Context from a metadata string.
+   *
+   * @param metadata the metadata string
+   * @return the Context
+   */
   static Context build_from(std::string const &metadata);
   /**
    * Store a copy of input game::PlayerMap
