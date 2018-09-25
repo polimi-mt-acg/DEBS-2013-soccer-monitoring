@@ -65,7 +65,13 @@ struct Batch {
    * The snapshot of the field.
    */
   Snapshot snapshot = {};
+  /**
+   * The timestamp of the first event in the batch
+   */
   std::chrono::picoseconds initial_ts = {};
+  /**
+   * The timestamp of the last event in the batch
+   */
   std::chrono::picoseconds final_ts = {};
 };
 } // namespace game
