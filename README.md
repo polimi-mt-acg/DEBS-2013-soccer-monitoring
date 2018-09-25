@@ -1,4 +1,6 @@
 # DEBS 2013 - Soccer Monitoring
+*A real-time OpenMP application for ball possession statistics during a soccer game.*
+
 ## Project assignment
 The project goal is to develop a system to provide analytics over high velocity sensor data originating from a soccer game. The data comes from a number of wireless sensors embedded in the shoes and a ball used during a soccer match. The data spans the whole duration of the game.
 
@@ -45,4 +47,9 @@ script/build_release.sh # For release build (i.e. optimizations enabled)
 build/tests
 ```
 ## Project context
-This project has been developed for the [Middleware Technologies for Distributed Systems course](https://www4.ceda.polimi.it/manifesti/manifesti/controller/ManifestoPublic.do?EVN_DETTAGLIO_RIGA_MANIFESTO=evento&aa=2017&k_cf=225&k_corso_la=481&k_indir=T2A&codDescr=090931&lang=EN&semestre=1&idGruppo=3589&idRiga=216904) (A.Y. 2017/2018) at [Politecnico di Milano](https://www.polimi.it/).
+This project has been developed for the [Middleware Technologies for Distributed Systems course]
+(A.Y. 2017/2018) at [Politecnico di Milano]. Look at the [polimi-mt-acg] page for other projects. 
+
+[Middleware Technologies for Distributed Systems course]: https://www4.ceda.polimi.it/manifesti/manifesti/controller/ManifestoPublic.do?EVN_DETTAGLIO_RIGA_MANIFESTO=evento&aa=2017&k_cf=225&k_corso_la=481&k_indir=T2A&codDescr=090931&lang=EN&semestre=1&idGruppo=3589&idRiga=216904
+[Politecnico di Milano]: https://www.polimi.it
+[polimi-mt-acg]: https://github.com/polimi-mt-acg
