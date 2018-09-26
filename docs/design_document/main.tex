@@ -46,20 +46,20 @@ Together with the assumptions already set in \cite{Project}, we set others takin
 Our solution to the problem adopts C++ as programming language (standard 2017). The choice was justified by the language \emph{zero-cost abstraction} philosophy that allowed us to structure the code according to good OO design principles without sacrificing performance. Moreover we used OpenMP \cite{omp} as parallelization paradigm because it made it possible to design the application workflow sequentially and easily introduce parallelism in those sections that could benefit.
 
 \section{Architectural Design}
-In this section we describe our application architecture along with a rationale of the design choices. We start from a few numerical considerations. The application is required to be a \textit{real-time stream processor} of data arriving at a frequency of $2000Hz$ for ball position events and $200Hz$ for players position events, summing up to roughly $15000$ events per second. For the purpose of computing the ball possession, given a single upcoming player position event only one \textit{ball-player} distance is required to decide which player is the closest, because the distance of the ball from all the other players is left unchanged. Although, for a ball position event we must compute the distance for all the players with the new position of the ball to elect the ball possessor, keeping in mind that the ball position update frequency is $10$ times the players' one. Therefore we opted for a solution that could exploit as much as possible the available parallelism in the process.
+In this section we describe our application architecture along with a rationale of the design choices. We start from a few numerical considerations. The application is required to be a \textit{real-time stream processor} of data arriving at a frequency of $2000Hz$ for ball position events and $200Hz$ for players position events, summing up to roughly $15000$ events per second. For the purpose of computing the ball possession, given a single upcoming player position event only one \textit{ball-player} distance computation is required to decide which player is the closest, because the distance of the ball from all the other players is left unchanged. Although, for a ball position event we must compute the distance for all the players with the new position of the ball to elect the ball possessor, keeping in mind that the ball position update frequency is $10$ times the players' one. Therefore we opted for a solution that could exploit as much as possible the available parallelism in the process.
 
 The application architecture is composed of the following main components:
 \begin{enumerate*}[(a)]
-    \item \texttt{EventFetcher} reads the incoming events sequentially from the dataset, parses them and adds them to a \textit{mini-batch} of variable size.
-    \item \texttt{GameStatistics} receives a mini-batch and it elects the ball possessor \emph{per time-instant}. It accumulates the number of times a player was in possession of the ball and outputs partial and whole-game statistics.
-    \item \texttt{Visualizer} gracefully displays the computed statistics on the desired output stream.
+    \item \texttt{EventFetcher} (Figure~\ref{fig:event_fetcher_class}) reads the incoming events sequentially from the dataset, parses them and adds them to a \textit{mini-batch} of variable size.
+    \item \texttt{GameStatistics} (Figure~\ref{fig:game_statistics_class}) receives a mini-batch and it elects the ball possessor \emph{per time-instant}. It accumulates the number of times a player was in possession of the ball and outputs partial and whole-game statistics.
+    \item \texttt{Visualizer} (Figure~\ref{fig:visualizer_class}) gracefully displays the computed statistics on the desired output stream.
 \end{enumerate*}
 
 A UML sequence diagram of the components interaction is reported in Figure~\ref{fig:top_level_seq}.
 
 \section{Algorithms Design}
 \subsection{Events parsing}
-The process of events parsing hides two choices that are worth mentioning. As the position updates arrive as a stream we must keep a stateful \texttt{context} registering current position of each sensor on the field. It is \texttt{EventFetcher} responsibility to update it as long as new events arrive. Moreover, events meaningful for ball possession statistics are grouped in \texttt{mini-batches}. The decision of employing mini-batches was taken to maximize the parallelization impact on the application performance. In fact, moving a large number of events to the processors caches considerably reduces the application time spent in I/O operations, since the number of \textit{reads} from secondary memory becomes less than the number of events. When a batch is either full, the game is paused or $\mathbf{T}$ seconds of game are elapsed, the batch is sent to \texttt{GameStatistics}.
+The process of events parsing hides two choices that are worth mentioning. As the position updates arrive as a stream we must keep a stateful \texttt{context} (Figure~\ref{fig:context_class}) registering current position of each sensor on the field. It is \texttt{EventFetcher} responsibility to update it as long as new events arrive. Moreover, events meaningful for ball possession statistics are grouped in \texttt{mini-batches}. The decision of employing mini-batches was taken to maximize the parallelization impact on the application performance. In fact, moving a large number of events to the processors caches considerably reduces the application time spent in I/O operations, since the number of \textit{reads} from secondary memory becomes less than the number of events. When a batch is either full, the game is paused or $\mathbf{T}$ seconds of game are elapsed, the batch is sent to \texttt{GameStatistics}.
 
 \subsection{Accumulating ball possessions}
 \label{sec:accumul}
@@ -131,6 +131,30 @@ The application code was analyzed with Valgrind \cite{valgrind} to check for any
 
 \end{multicols}
 
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=.43\textheight, width=1\textwidth, keepaspectratio]{UML/context_class_diagram.pdf}
+    \caption{Context component class diagram.}
+    \label{fig:context_class}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=.6\textheight, width=1\textwidth, keepaspectratio]{UML/event_fetcher_class_diagram.pdf}
+    \caption{EventFetcher component class diagram. Refer to Figure~\ref{fig:context_class} for details on Context class.}
+    \label{fig:event_fetcher_class}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=.5\textheight, width=1\textwidth, keepaspectratio]{UML/game_statistics_class_diagram.pdf}
+    \caption{GameStatistics component class diagram. Refer to Figure~\ref{fig:context_class} for details on Context class.}
+    \label{fig:game_statistics_class}
+\end{figure}
+\begin{figure}[h]
+    \centering
+    \includegraphics[height=.5\textheight, width=1\textwidth, keepaspectratio]{UML/visualizer_class_diagram.pdf}
+    \caption{Visualizer component class diagram. Refer to Figure~\ref{fig:context_class} for details on PlayerMap and TeamMap classes.}
+    \label{fig:visualizer_class}
+\end{figure}
 \begin{figure}[h]
     \centering
     \includegraphics[height=.85\textheight]{UML/top_level_seq.pdf}
