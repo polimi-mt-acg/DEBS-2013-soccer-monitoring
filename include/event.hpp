@@ -14,6 +14,12 @@ using picoseconds = std::chrono::duration<long long int, std::pico>;
 
 namespace game {
 /**
+ * @brief The declared duration of a game half (in picoseconds).
+ */
+constexpr auto expected_half_duration =
+    std::chrono::duration_cast<std::chrono::picoseconds>(
+        std::chrono::minutes(30));
+/**
  * @brief The instant of game start (in picoseconds).
  */
 constexpr auto game_start = std::chrono::picoseconds{10753295594424116};
@@ -21,6 +27,11 @@ constexpr auto game_start = std::chrono::picoseconds{10753295594424116};
  * @brief The instant of first half end (in picoseconds).
  */
 constexpr auto break_start = std::chrono::picoseconds{12398000000000000};
+/**
+ * @brief The declared instant of first half end (in picoseconds).
+ */
+constexpr auto official_break_start =
+    std::chrono::picoseconds{12557295594424116};
 /**
  * @brief The instant of second half start (in picoseconds).
  */

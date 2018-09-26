@@ -114,6 +114,7 @@ private:
   double team_b_partial = 0.0;
 
   void init_partials(TeamMap const &teams);
+  void update_game_time(std::chrono::picoseconds last_ts);
 
   void draw_separator();
   void draw_players_header();
