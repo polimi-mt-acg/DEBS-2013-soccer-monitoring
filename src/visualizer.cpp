@@ -53,15 +53,7 @@ void Visualizer::update_stats(
   }
 
   if (!is_game_end) {
-    namespace chrono = std::chrono;
-    // Increment game time
-    if (last_ts >= game_start) {
-      // Add epsilon to round the numbers off
-      last_ts += chrono::milliseconds(1);
-      game_time = chrono::duration_cast<chrono::seconds>(last_ts - game_start);
-    } else {
-      game_time = game_time + chrono::seconds(time_units);
-    }
+    update_game_time(last_ts);
   }
 }
 
@@ -69,6 +61,28 @@ void Visualizer::init_partials(TeamMap const &teams) {
   auto names = players.get_player_names();
   for (auto const &name : names) {
     partials.insert({name, 0.0});
+  }
+}
+
+void Visualizer::update_game_time(std::chrono::picoseconds last_ts) {
+  namespace chrono = std::chrono;
+  // Increment game time
+  if (last_ts >= game_start) {
+    // Add epsilon to round the numbers off
+    last_ts += chrono::milliseconds(1);
+    if (last_ts < break_start) {
+      game_time = chrono::duration_cast<chrono::seconds>(last_ts - game_start);
+    } else if (break_start <= last_ts && last_ts < break_end) {
+      game_time = chrono::duration_cast<chrono::seconds>(official_break_start -
+                                                         game_start);
+    } else {
+      auto first_half_duration = chrono::duration_cast<chrono::seconds>(
+          official_break_start - game_start);
+      game_time = chrono::duration_cast<chrono::seconds>(
+          expected_half_duration + last_ts - break_end);
+    }
+  } else {
+    game_time = game_time + chrono::seconds(time_units);
   }
 }
 

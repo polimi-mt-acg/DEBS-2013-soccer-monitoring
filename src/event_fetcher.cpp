@@ -176,8 +176,11 @@ Batch EventFetcher::parse_batch() {
           return batch_full_size();
         }
       } else {
-        if (is_break(*position_event) && !batch.empty()) {
-          return batch_game_break(*position_event);
+        if (is_break(*position_event)) {
+          period_start = break_end;
+          if (!batch.empty()) {
+            return batch_game_break(*position_event);
+          }
         } else {
           // Just update sensor position
           update_sensor_position(*position_event);
