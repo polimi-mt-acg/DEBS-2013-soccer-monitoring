@@ -67,7 +67,7 @@ This is the parallel section of our application. We want to compute the ball pos
 
 First, we instantiate a \texttt{shared} structure $\mathcal{B}$ to store the ball possessor for each time instant. Then for each player \texttt{p} on the field we perform the following \textbf{in parallel}:
 \begin{enumerate*}[(a)]
-    \item Store a structure $\mathcal{D}$ to hold a list of \textit{ball-player} distances.
+    \item Store a local structure $\mathcal{D}$ to hold a list of \textit{ball-player} distances.
     \item Store a local copy of player \texttt{p} and ball positions at the time instant the first event was added to the mini-batch.
     \item For each event in the batch do the following: if it is an update on the position of player \texttt{p} then update the local copy of \texttt{p} position. If instead it is a ball position event, first update the local ball position, then compute the distance $d$ between the local position of \texttt{p} and the new position of the ball. If $d \leq \mathbf{K}$ then append $d$ to $\mathcal{D}$. Otherwise append $\infty$.
     \item After going through all the events, \textit{reduce} $\mathcal{D}$ to $\mathcal{B}$ in a \texttt{critical} section. That is, if $\mathcal{B}$ is empty, just copy $\mathcal{D}$ to $\mathcal{B}$. Otherwise, for each time instant $t$ check if $\mathcal{D}_t < \mathcal{B}_t$. If so, store in $\mathcal{B}_t$ that \texttt{p} is the current closest player, together with its distance $\mathcal{D}_t$. Because the number of ball position events is seen equal by all the threads, we are sure that $\mathcal{B}$ and $\mathcal{D}$ dimensions are the same across all the threads.
@@ -130,54 +130,54 @@ The application code was analyzed with Valgrind \cite{valgrind} to check for any
 \end{thebibliography}
 
 \end{multicols}
-
-\begin{figure}[h]
+\begin{appendices}
+\begin{figure}[h!]
     \centering
     \includegraphics[height=.43\textheight, width=1\textwidth, keepaspectratio]{UML/context_class_diagram.pdf}
     \caption{Context component class diagram.}
     \label{fig:context_class}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[h!]
     \centering
     \includegraphics[height=.6\textheight, width=1\textwidth, keepaspectratio]{UML/event_fetcher_class_diagram.pdf}
     \caption{EventFetcher component class diagram. Refer to Figure~\ref{fig:context_class} for details on Context class.}
     \label{fig:event_fetcher_class}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[h!]
     \centering
     \includegraphics[height=.5\textheight, width=1\textwidth, keepaspectratio]{UML/game_statistics_class_diagram.pdf}
     \caption{GameStatistics component class diagram. Refer to Figure~\ref{fig:context_class} for details on Context class.}
     \label{fig:game_statistics_class}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}[h!]
     \centering
     \includegraphics[height=.5\textheight, width=1\textwidth, keepaspectratio]{UML/visualizer_class_diagram.pdf}
     \caption{Visualizer component class diagram. Refer to Figure~\ref{fig:context_class} for details on PlayerMap and TeamMap classes.}
     \label{fig:visualizer_class}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}
     \centering
     \includegraphics[height=.85\textheight]{UML/top_level_seq.pdf}
     \caption{Sequence diagram of the top-level interaction of main components.}
     \label{fig:top_level_seq}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}
     \centering
     \includegraphics[height=.95\textheight]{UML/accumulate_stats.pdf}
     \caption{Sequence diagram of the process to compute ball possessions.}
     \label{fig:accumulate_stats_seq}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}
     \centering
     \includegraphics[width=1\textwidth]{Performance/speedup_analysis_7_1.png}
     \caption{On top, the application response time per-batch-processing with respect to the number of threads and the batch size. Below, the speed-up with respect to the single-threaded experiment.}
     \label{fig:perf1}
 \end{figure}
-\begin{figure}[h]
+\begin{figure}
     \centering
     \includegraphics[width=1\textwidth]{Performance/speedup_analysis_12_1.png}
     \caption{On top, the application response time per-batch-processing with respect to the number of threads (fixed batch size). Below, the speed-ip with respect to the single-threaded experiment.}
     \label{fig:perf2}
 \end{figure}
-
+\end{appendices}
 \end{document}
