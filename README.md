@@ -15,6 +15,7 @@ Check [docs](docs) for information about our implementation scalability.
 
 ## Setup
 **Soccer Monitoring** tool requires the following dependencies to be installed on your system:
+ - C++17 compliant compiler
  - OpenMP headers (>= 3.x)
  - Boost::program_options
  - CMake (>= 3.x)
