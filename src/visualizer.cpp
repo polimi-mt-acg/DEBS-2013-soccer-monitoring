@@ -70,9 +70,9 @@ void Visualizer::update_game_time(std::chrono::picoseconds last_ts) {
   if (last_ts >= game_start) {
     // Add epsilon to round the numbers off
     last_ts += chrono::milliseconds(1);
-    if (last_ts < break_start) {
+    if (last_ts <= break_start) {
       game_time = chrono::duration_cast<chrono::seconds>(last_ts - game_start);
-    } else if (break_start <= last_ts && last_ts < break_end) {
+    } else if (break_start < last_ts && last_ts < break_end) {
       game_time = chrono::duration_cast<chrono::seconds>(official_break_start -
                                                          game_start);
     } else {
