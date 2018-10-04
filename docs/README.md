@@ -141,7 +141,7 @@ if not op_path.is_file():
     np.save(str(op_path), data)
 ```
 
-## Number of threads analysis
+## Batch size analysis
 
 
 ```python
@@ -153,7 +153,7 @@ plt.figure(figsize=(15, 8))
 plt.clf()
 
 ax = plt.subplot(211)
-exec_time_t.plot.bar(y='BatchTime', legend=False, title='Batch time (seconds) [NbThreads = {}]'.format(max_nb_threads), rot=0, ax=ax)
+exec_time_t.plot.bar(y='BatchTime', legend=False, title='T time-units response time (seconds) [NbThreads = {}]'.format(max_nb_threads), rot=0, ax=ax)
 
 ax = plt.subplot(212)
 speedup_t.plot.bar(y='Speedup', legend=False, title='Speedup (%) [NbThreads = {}]'.format(max_nb_threads), rot=0, ax=ax)
@@ -162,7 +162,7 @@ speedup_t.plot.bar(y='Speedup', legend=False, title='Speedup (%) [NbThreads = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7fa6240c6160>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f63375db7b8>
 
 
 
@@ -170,7 +170,7 @@ speedup_t.plot.bar(y='Speedup', legend=False, title='Speedup (%) [NbThreads = {}
 ![png](speedup_analysis_files/speedup_analysis_10_1.png)
 
 
-## Batch size analysis
+## Number of threads analysis
 
 
 ```python
@@ -182,7 +182,7 @@ plt.figure(figsize=(15, 8))
 plt.clf()
 
 ax = plt.subplot(211)
-exec_time_b.plot.bar(y='BatchTime', legend=False, title='Batch time (seconds) [BatchSize = {}]'.format(col), rot=0, ax=ax)
+exec_time_b.plot.bar(y='BatchTime', legend=False, title='T time-units response time (seconds) [BatchSize = {}]'.format(col), rot=0, ax=ax)
 
 ax = plt.subplot(212)
 speedup_b.plot.bar(y='Speedup', legend=False, title='Speedup (%) [BatchSize = {}]'.format(col), rot=0, ax=ax)
@@ -191,7 +191,7 @@ speedup_b.plot.bar(y='Speedup', legend=False, title='Speedup (%) [BatchSize = {}
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7fa6224e0e80>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f63372badd8>
 
 
 
