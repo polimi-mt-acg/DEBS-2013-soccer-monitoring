@@ -181,10 +181,9 @@ Batch EventFetcher::parse_batch() {
           if (!batch.empty()) {
             return batch_game_break(*position_event);
           }
-        } else {
-          // Just update sensor position
-          update_sensor_position(*position_event);
         }
+        // In any case update sensor position
+        update_sensor_position(*position_event);
       }
     } else {
       return batch_game_over();
